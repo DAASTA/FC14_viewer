@@ -16,7 +16,7 @@ inline int absDist(TPosition p1, TPosition p2){return abs((int)p1.x-(int)p2.x)+a
 
 Game::Game(Map& map, vector<vector<float> > militaryKernel,int playersize)
 	: map(map), playerSize(playersize), playerSaving(playersize, INITIAL_PLAYER_MONEY),
-      round(0), isValid(true), isPlayerAlive(playersize), playerIncome(playersize, 0), 
+      round(0), _isValid(true), isPlayerAlive(playersize), playerIncome(playersize, 0), 
       MilitaryKernel(militaryKernel), aliveCnt(playersize)
 {
 	rows = map.getRows();
@@ -111,9 +111,9 @@ bool Game::Run(vector<vector<TMilitaryCommand> > & MilitaryCommandMap,
 
     ++round;
     if (CheckWinner()) 
-        isValid=false;
+        _isValid=false;
 
-    return isValid;    
+    return _isValid;    
 }
 
 //Diplomacy Phase (Deal with DiplomaticCommandMap)
@@ -315,6 +315,10 @@ TMap Game::sup(TMap pos, TMap max)
 
 bool Game::MilitaryPhase(vector<vector<TMilitaryCommand> > & MilitaryCommandList, vector<TPosition > &NewCapitalList) 
 {
+    // 地图
+    vector<vector<TMilitary> > MapAtk = map.getMapAtk();
+    vector<vector<TMilitary> > MapDef = map.getMapDef();
+
     // 影响力图
     vector<vector<vector<TMilitary> > > player_influence_map(playerSize,
         vector<vector<TMilitary> >(cols, 
@@ -325,7 +329,7 @@ bool Game::MilitaryPhase(vector<vector<TMilitaryCommand> > & MilitaryCommandList
     // 击破图
     vector<vector<TId> > map_new_owner(cols, 
         vector<TId>(rows, UNKNOWN_PLAYER_ID));
-    
+
     // bfs用的队列
     queue<TPosition> q;
 
@@ -401,7 +405,7 @@ bool Game::MilitaryPhase(vector<vector<TMilitaryCommand> > & MilitaryCommandList
                     if (diplomacy[id][owner] == Allied) 
                         map_defense[x][y] += player_influence_map[id][x][y];
                 // 防守系数
-                map_defense[x][y] *= map.getMapDef()[x][y];
+                map_defense[x][y] *= MapDef[x][y];
             } 
             else {
                 // 断补和无主地的守备力为 0
@@ -417,7 +421,7 @@ bool Game::MilitaryPhase(vector<vector<TMilitaryCommand> > & MilitaryCommandList
             TMilitary second_attack = 0;
             
             // 攻击系数
-            TMilitary atk_ratio = map.getMapAtk()[x][y];
+            TMilitary atk_ratio = MapAtk[x][y];
 
             // 逐个检查攻击方
             for (TId id=0; id<playerSize; ++id) 
@@ -488,6 +492,12 @@ bool Game::MilitaryPhase(vector<vector<TMilitaryCommand> > & MilitaryCommandList
         for (TMap y=0; y<rows; ++y) 
             if (map_new_owner[x][y] != UNKNOWN_PLAYER_ID) 
                 globalMap[x][y] = map_new_owner[x][y];
+
+    // 强行去除无敌土地上的领土        
+    for (TMap x=0; x<cols; ++x)
+        for (TMap y=0; y<rows; ++y)
+            if (MapAtk[x][y]<=0)
+                globalMap[x][y] = NEUTRAL_PLAYER_ID;
 
     // 更新首都
     for (TId id = 0; id<playerSize; ++id) {

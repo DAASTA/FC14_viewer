@@ -54,20 +54,20 @@ bool HelloWorld::init()
     loadLabel->setTextColor(Color4B::WHITE);
     loadItem = MenuItemLabel::create(loadLabel, CC_CALLBACK_1(HelloWorld::menuLoadFile, this));
     loadItem->setAnchorPoint(Vec2(0.5, 0.5));
-    loadItem->setPosition(origin + Vec2(visibleSize) - Vec2(100, 100));
+    loadItem->setPosition(origin + Vec2(visibleSize) - Vec2(120, 100));
     // 按钮 Next Round
     auto nextRoundLabel = Label::createWithTTF("Next Round", "fonts/Ubuntu-RI.ttf", 30);
     nextRoundLabel->setTextColor(Color4B::WHITE);
     nextRoundItem = MenuItemLabel::create(nextRoundLabel, CC_CALLBACK_1(HelloWorld::menuNextRound, this));
     nextRoundItem->setAnchorPoint(Vec2(0.5, 0.5));
-    nextRoundItem->setPosition(origin + Vec2(visibleSize) - Vec2(100, 150));
+    nextRoundItem->setPosition(origin + Vec2(visibleSize) - Vec2(120, 150));
     nextRoundItem->setEnabled(false);
     // 按钮 Test
     auto testLabel = Label::createWithTTF("Test", "fonts/Ubuntu-RI.ttf", 30);
     testLabel->setTextColor(Color4B::WHITE);
     testItem = MenuItemLabel::create(testLabel, CC_CALLBACK_1(HelloWorld::menuTest, this));
     testItem->setAnchorPoint(Vec2(0.5, 0.5));
-    testItem->setPosition(origin + Vec2(visibleSize) - Vec2(100, 200));
+    testItem->setPosition(origin + Vec2(visibleSize) - Vec2(120, 200));
 
     // menu 
     auto menu = Menu::create(closeItem, loadItem, nextRoundItem, testItem, nullptr);
@@ -77,26 +77,39 @@ bool HelloWorld::init()
     // 加载 背景图
     auto background = Sprite::create("map.png");
     background->setAnchorPoint(Vec2(0, 0));  // anchor point 设置为左下角
-    background->setPosition(Vec2(0, 0)); //  
+    background->setPosition(Vec2(20, 20)); //  
     addChild(background, 1); // z-order
 
     // 加载 _tileMap 
     _tileMap = CCTMXTiledMap::create("map.tmx");
     _tileMap->setAnchorPoint(Vec2(0, 0));  // anchor point 设置为左下角
-    _tileMap->setPosition(Vec2(0, 0)); // 
+    _tileMap->setPosition(Vec2(20, 20)); // 
     addChild(_tileMap, 100); // z-order
-    
+    // label for tileMap
+    for (int x = 0; x < _tileMap->getMapSize().width; ++x) {
+        auto label = Label::createWithTTF(to_string(x), "fonts/Ubuntu-RI.ttf", 10);
+        label->setAnchorPoint(Vec2(0, 0.5));
+        label->setRotation(-90);
+        label->setPosition(Vec2(16 * x + 28, 580));
+        addChild(label);
+    }
+    for (int y = 0; y < _tileMap->getMapSize().height; ++y) {
+        auto label = Label::createWithTTF(to_string(y), "fonts/Ubuntu-RI.ttf", 10);
+        label->setAnchorPoint(Vec2(1, 0.5));
+        label->setPosition(Vec2(14, 28 + (_tileMap->getMapSize().height - 1 - y) * 16));
+        addChild(label);
+    }
+
     // 加载 _tileDipMap
     _tileDipMap = CCTMXTiledMap::create("dip.tmx");
     _tileDipMap->setAnchorPoint(Vec2(0, 0));  // anchor point 设置为左下角
-    _tileDipMap->setPosition(Vec2(450, 20)); // 
+    _tileDipMap->setPosition(Vec2(500, 20)); // 
     addChild(_tileDipMap, 99); // z-order
-
-    // label 
+    // label for tileDipMap
     for (int id = 0; id < 8; ++id) {
         Label* label = Label::createWithTTF("0/0", "fonts/Ubuntu-RI.ttf", 12);
         label->setAnchorPoint(Vec2(0.5, 0)); // 下边中点
-        label->setPosition(Vec2(425, 20 + (7 - id) * 16));
+        label->setPosition(Vec2(460, 20 + (7 - id) * 16));
         score_list.push_back(label);
         addChild(label, 110);
     }
@@ -291,7 +304,7 @@ void HelloWorld::RefreshMap()
             order[rank[i]] = i;
         }
         for (TId id = 0; id < player_size; ++id) {
-            if (game->getIfPlayerAlive(id))
+            if (game->isAlive(id))
                 layer_icon->setTileGID(11 + id, Vec2(1 + id, 0));
             else
                 layer_icon->setTileGID(0, Vec2(1 + id, 0));
@@ -303,7 +316,7 @@ void HelloWorld::RefreshMap()
                 else layer_dip->setTileGID(0, Vec2(1 + i1, 1 + order[i2]));
             }
         for (TId id=0; id<player_size; ++id)
-            if (game->getIfPlayerAlive(id)) {
+            if (game->isAlive(id)) {
                 score_list[order[id]]->setString(to_string(sav[id]) + "/" + to_string(inc[id]));
             }
             else {
