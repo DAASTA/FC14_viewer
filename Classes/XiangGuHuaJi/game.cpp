@@ -17,7 +17,7 @@ inline int absDist(TPosition p1, TPosition p2){return abs((int)p1.x-(int)p2.x)+a
 Game::Game(Map& map, vector<vector<float> > militaryKernel,int playersize)
 	: map(map), playerSize(playersize), playerSaving(playersize, INITIAL_PLAYER_MONEY),
       round(0), isValid(true), isPlayerAlive(playersize), playerIncome(playersize, 0), 
-      MilitaryKernel(militaryKernel)
+      MilitaryKernel(militaryKernel), aliveCnt(playersize)
 {
 	rows = map.getRows();
 	cols = map.getCols();
@@ -60,6 +60,8 @@ Game::Game(Map& map, vector<vector<float> > militaryKernel,int playersize)
 			}
 		}
 	}
+    player_ranking.resize(playerSize);
+    for (int i = 0; i < playerSize; ++i) player_ranking[i] = i;
 
     printVecMat<float>(militaryKernel, "MilitaryKernel");
 	const float pi = 3.1416f;
@@ -573,11 +575,12 @@ bool Game::ProducingPhase()
 {
     //initialize
     for (TId id=0; id<playerSize; ++id)
-    {
-        playerArea[id] = 0;
-        // lowest income
-        playerIncome[id] = 1;
-    }
+        if (isPlayerAlive[id])
+        {
+            playerArea[id] = 0;
+            // lowest income
+            playerIncome[id] = 1;
+        }
     // map income 
     for (TMap i=0; i<cols; i++)
     {
@@ -611,13 +614,12 @@ bool Game::ProducingPhase()
 //Check the winner and the loser (Deal with PlayerInfoList)
 bool Game::CheckWinner()
 {
-	if (round == MAX_ROUND)
-	{
+    if (aliveCnt == 1 || round == MAX_ROUND)
+    {
         return true;
-	}
+    }
     else
     {
-        TId aliveCnt=0;
         for (TId id=0; id<playerSize; id++)
         {
             if (isPlayerAlive[id])
@@ -625,6 +627,11 @@ bool Game::CheckWinner()
                 if (playerArea[id] == 0 && !isPosValid(playerCapital[id]))
                 {
                     //welcome death
+                    --aliveCnt;
+                    player_ranking[aliveCnt] = id;
+                    playerSaving[id] = 0;
+                    playerIncome[id] = 0;
+
                     isPlayerAlive[id] = false;
                     for (TId playerid=0; playerid<playerSize; playerid++)
                     {
@@ -633,16 +640,21 @@ bool Game::CheckWinner()
                     }
                     diplomacy[id][id] = Allied;
                 }
-                else
-                {
-                    aliveCnt++;
-                }
             }
         }
-        if (aliveCnt == 1)
-        {
-            return true;
-        }
+
+        // refresh the rank
+        for (int i = 0; i < aliveCnt; ++i) player_ranking[i] = UNKNOWN_PLAYER_ID;
+        for (TId id = 0; id < playerSize; ++id) 
+            if (isPlayerAlive[id]) {
+                int r = 0;
+                while (isPlayer(player_ranking[r]) && playerIncome[player_ranking[r]] > playerIncome[id]) ++r;
+                for (int i = aliveCnt - 1; i > r; --i) player_ranking[i] = player_ranking[i - 1];
+                player_ranking[r] = id;
+            }
+
+        if (aliveCnt == 1) return true;
+
         return false;
     }
 }

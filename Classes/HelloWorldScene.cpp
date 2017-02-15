@@ -75,19 +75,32 @@ bool HelloWorld::init()
     this->addChild(menu, 1);
 
     // 加载 背景图
-    auto background = Sprite::create("THU_map_color_s.png");
+    auto background = Sprite::create("map.png");
     background->setAnchorPoint(Vec2(0, 0));  // anchor point 设置为左下角
     background->setPosition(Vec2(0, 0)); //  
     addChild(background, 1); // z-order
 
-    
-
-    // 加载 tile map
+    // 加载 _tileMap 
     _tileMap = CCTMXTiledMap::create("map.tmx");
     _tileMap->setAnchorPoint(Vec2(0, 0));  // anchor point 设置为左下角
     _tileMap->setPosition(Vec2(0, 0)); // 
     addChild(_tileMap, 100); // z-order
     
+    // 加载 _tileDipMap
+    _tileDipMap = CCTMXTiledMap::create("dip.tmx");
+    _tileDipMap->setAnchorPoint(Vec2(0, 0));  // anchor point 设置为左下角
+    _tileDipMap->setPosition(Vec2(450, 20)); // 
+    addChild(_tileDipMap, 99); // z-order
+
+    // label 
+    for (int id = 0; id < 8; ++id) {
+        Label* label = Label::createWithTTF("0/0", "fonts/Ubuntu-RI.ttf", 12);
+        label->setAnchorPoint(Vec2(0.5, 0)); // 下边中点
+        label->setPosition(Vec2(425, 20 + (7 - id) * 16));
+        score_list.push_back(label);
+        addChild(label, 110);
+    }
+
     return true;
 }
 
@@ -194,17 +207,131 @@ void HelloWorld::menuTest(Ref * sender)
 
 void HelloWorld::RefreshMap()
 {
-    if (game == nullptr) return;
-    vector<vector<MapPointInfo> > map = game->getGlobalMap();
 
-    auto layer = _tileMap->getLayer("owner");
-    for (int x = 0; x < game->getCols(); ++x) {
-        for (int y = 0; y < game->getRows(); ++y) {
-            MapPointInfo& mpi = map[x][y];
-            if (game->isPlayer(mpi.owner)) 
-                layer->setTileGID(11 + mpi.owner, Vec2(x, y));
-            else layer->setTileGID(0, Vec2(x, y));
+    if (game == nullptr) return;
+    int cols = game->getCols();
+    int rows = game->getRows();
+    int player_size = game->getPlayerSize();
+    vector<vector<MapPointInfo> > map = game->getGlobalMap();
+    vector<vector<TDiplomaticStatus> > dip = game->getDiplomacy();
+    vector<TMoney> sav = game->getPlayerSaving();
+    vector<TMoney> inc = game->getPlayerIncome();
+    vector<int> rank = game->getPlayerRanking();
+
+    // map color & shadow
+    {
+        auto layer_color = _tileMap->getLayer("color");
+        auto layer_shadow = _tileMap->getLayer("shadow");
+        for (int x = 0; x < cols; ++x)
+            for (int y = 0; y < rows; ++y) {
+                MapPointInfo& mpi = map[x][y];
+                int gid_color = 0;
+                int gid_shadow = 0;
+
+                if (game->isPlayer(mpi.owner)) {
+                    gid_color = mpi.owner + 1;
+                    if (mpi.isSieged) gid_shadow = 21;
+                }
+
+                layer_color->setTileGID(gid_color, Vec2(x, y));
+                layer_shadow->setTileGID(gid_shadow, Vec2(x, y));
+            }
+    }
+
+    // military icon
+    {
+        auto layer_icon = _tileMap->getLayer("icon");
+        vector<vector<TId> > tmc_map(cols,
+            vector<TId>(rows, UNKNOWN_PLAYER_ID));  
+        vector<vector<TMilitaryCommand>> MilitaryCommandMap;
+        vector<vector<TDiplomaticCommand>> DiplomaticCommandMap;
+        vector<TPosition> NewCapitalList;
+        if (log_reader->get(game->getRound(),
+                MilitaryCommandMap,
+                DiplomaticCommandMap,
+                NewCapitalList)) {
+
+            for (TId id = 0; id < player_size; ++id)
+                for (size_t i = 0; i < MilitaryCommandMap[id].size(); ++i) {
+                    TMilitaryCommand& tmc = MilitaryCommandMap[id][i];
+                    if (tmc.bomb_size > 0 && tmc.place.x < cols && tmc.place.y < rows)
+                        tmc_map[tmc.place.x][tmc.place.y] = id;
+                    
+                }
+            for (TId id = 0; id < player_size; ++id)
+                if (NewCapitalList[id].x < cols && NewCapitalList[id].y) {
+                    tmc_map[NewCapitalList[id].x][NewCapitalList[id].y] = id;
+                }
+
+            for (TMap x = 0; x < cols; ++x) 
+                for (TMap y = 0; y < rows; ++y) {
+                    if (game->isPlayer(tmc_map[x][y])) {
+                        layer_icon->setTileGID(11 + tmc_map[x][y], Vec2(x, y));
+                    }
+                    else layer_icon->setTileGID(0, Vec2(x, y));
+                }
+            
+        }
+        else {
+            for (TMap x = 0; x < cols; ++x)
+                for (TMap y = 0; y < rows; ++y) 
+                    layer_icon->setTileGID(0, Vec2(x, y));
         }
     }
 
+    // dip
+    {
+       
+        auto layer_dip = _tileDipMap->getLayer("dip");
+        auto layer_icon = _tileDipMap->getLayer("icon");
+        vector<int> order(player_size);
+
+        for (int i = 0; i < player_size; ++i) {
+            layer_icon->setTileGID(11 + rank[i], Vec2(0, 1 + i));
+            order[rank[i]] = i;
+        }
+        for (TId id = 0; id < player_size; ++id) {
+            if (game->getIfPlayerAlive(id))
+                layer_icon->setTileGID(11 + id, Vec2(1 + id, 0));
+            else
+                layer_icon->setTileGID(0, Vec2(1 + id, 0));
+        }
+
+        for (TId i1=0; i1<player_size; ++i1)
+            for (TId i2 = 0; i2 < player_size; ++i2) {
+                if (i1 != i2) layer_dip->setTileGID(1 + dip[i1][i2], Vec2(1 + i1, 1 + order[i2]));
+                else layer_dip->setTileGID(0, Vec2(1 + i1, 1 + order[i2]));
+            }
+        for (TId id=0; id<player_size; ++id)
+            if (game->getIfPlayerAlive(id)) {
+                score_list[order[id]]->setString(to_string(sav[id]) + "/" + to_string(inc[id]));
+            }
+            else {
+                score_list[order[id]]->setString("-");
+            }
+                
+    }
+
+
+    //auto layer_border = _tileMap->getLayer("border");
+    //vector<vector<int> > map_border(cols,
+    //    vector<int>(rows, 0));
+    //int dx[] = { 0,  1,  0, -1};
+    //int dy[] = {-1,  0,  1,  0};
+    //int bd[] = {1, 2, 4, 8};
+    //for (int x = 0; x < cols; ++x) 
+    //    for (int y = 0; y < rows; ++y) {
+    //        if (!game->isPlayer(map[x][y].owner)) {
+    //            layer_border->setTileGID(0, Vec2(x, y));
+    //            continue;
+    //        }
+    //        for (int i = 0; i < 4; ++i) {
+    //            int lx = x + dx[i], ly = y + dy[i];
+    //            if (lx < 0 || lx >= cols || ly < 0 || ly >= rows) map_border[x][y] += bd[i];
+    //            else if (map[lx][ly].owner != map[x][y].owner) map_border[x][y] += bd[i];
+    //        }
+    //        /*if (map_border[x][y] == 0)layer_border->setTileGID(0, Vec2(x, y));
+    //        else*/ layer_border->setTileGID(16 * map[x][y].owner + 1 + map_border[x][y], Vec2(x, y));
+    //    }
+    
 }

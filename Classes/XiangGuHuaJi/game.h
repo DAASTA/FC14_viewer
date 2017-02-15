@@ -17,29 +17,35 @@
 using std::vector;
 
 namespace XGHJ {
-    class Game
-    {
-    public:
-        Game(Map& map, vector<vector<float> > militaryKernel, int playersize);
-        ~Game();
+class Game
+{
+public:
+    Game(Map& map, vector<vector<float> > militaryKernel, int playersize);
+    ~Game();
 
-        bool Start(vector<TMoney> bidPrice, vector<TPosition> posChoosed);
-        bool Run(vector<vector<TMilitaryCommand> > & MilitaryCommandMap,
-            vector<vector<TDiplomaticCommand> > & DiplomaticCommandMap,
-            vector<TPosition > &NewCapitalList);
+    bool Start(vector<TMoney> bidPrice, vector<TPosition> posChoosed);
+    bool Run(vector<vector<TMilitaryCommand> > & MilitaryCommandMap,
+        vector<vector<TDiplomaticCommand> > & DiplomaticCommandMap,
+        vector<TPosition > &NewCapitalList);
 
-        bool isPlayer(TId id) const;
-        vector<vector<MapPointInfo> > getGlobalMap(TId id = UNKNOWN_PLAYER_ID) const;
-        PlayerInfo getPlayerInfo(TId id, TId playerId) const;
-        MapPointInfo getMapPointInfo(TMap x, TMap y, TId playerId) const;
-        Info generateInfo(TId playerid) const;
+    bool isPlayer(TId id) const;
+    vector<vector<MapPointInfo> > getGlobalMap(TId id = UNKNOWN_PLAYER_ID) const;
+    PlayerInfo getPlayerInfo(TId id, TId playerId) const;
+    MapPointInfo getMapPointInfo(TMap x, TMap y, TId playerId) const;
+    Info generateInfo(TId playerid) const;
 
-        inline TMap getCols() const { return cols; }
-        inline TMap getRows() const { return rows; }
+    inline TMap getCols() const { return cols; }
+    inline TMap getRows() const { return rows; }
     inline int getMapChecksum() const { return map_checksum; }
-	inline TRound getRound() const {return round ;}
-	inline TId getPlayerSize() const {return playerSize ;}
-    
+    inline TRound getRound() const { return round; }
+    inline TId getPlayerSize() const { return playerSize; }
+    inline vector<vector<TDiplomaticStatus> > getDiplomacy() const { return diplomacy; }
+    inline bool getIfPlayerAlive(TId id) const { if (!isPlayer(id)) return false; return isPlayerAlive[id]; }
+    inline vector<TMoney> getPlayerSaving() const { return playerSaving; }
+    inline vector<TMoney> getPlayerIncome() const { return playerIncome; }
+    inline vector<TId> getPlayerRanking() const { return player_ranking; }
+   
+
     Map& map; 
 
 protected:
@@ -48,6 +54,7 @@ protected:
     int                 map_checksum;
 	TMap				rows,cols;
 	TId                 playerSize;
+    TId                 aliveCnt;
 	//需要保存到下回合的中间变量
 	TRound								round;
 	vector<vector<TId> >				globalMap;//ownership of the lands
@@ -59,6 +66,7 @@ protected:
 	vector<vector<int>>					roundToJusifyWar;
 	vector<bool>						backstabUsed;
     vector<TMoney>                      playerIncome;
+    vector<TId>                         player_ranking;
 
 	//一些次要函数
 	vector<TId> getWarList(TId id) const;

@@ -29,7 +29,9 @@ private:
 
     // ui ÷∏’Î
     cocos2d::CCTMXTiledMap *_tileMap;
+    cocos2d::CCTMXTiledMap *_tileDipMap;
     cocos2d::MenuItemLabel *loadItem, *nextRoundItem, *testItem;
+    std::vector<cocos2d::Label*>  score_list;
 
     // ”Œœ∑
     XGHJ::Map *game_map;

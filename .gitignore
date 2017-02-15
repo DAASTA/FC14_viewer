@@ -5,7 +5,9 @@ build*/
 /cocos2d
 *.db
 *.opendb
+*.TMP
 .vs
+
 
 # Compiled Object files
 *.slo

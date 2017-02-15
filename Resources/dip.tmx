@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="9" height="9" tilewidth="16" tileheight="16" nextobjectid="1">
+ <tileset firstgid="1" name="dip" tilewidth="16" tileheight="16" tilecount="10" columns="10">
+  <image source="P/dip.png" width="160" height="16"/>
+ </tileset>
+ <tileset firstgid="11" name="icon" tilewidth="16" tileheight="16" tilecount="10" columns="10">
+  <image source="P/icon.png" width="160" height="16"/>
+ </tileset>
+ <layer name="icon" width="9" height="9">
+  <data encoding="csv">
+0,11,12,13,14,15,16,17,18,
+11,0,0,0,0,0,0,0,0,
+12,0,0,0,0,0,0,0,0,
+13,0,0,0,0,0,0,0,0,
+14,0,0,0,0,0,0,0,0,
+15,0,0,0,0,0,0,0,0,
+16,0,0,0,0,0,0,0,0,
+17,0,0,0,0,0,0,0,0,
+18,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer name="dip" width="9" height="9">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,
+0,3,0,0,0,0,0,0,0,
+0,0,3,0,0,0,0,0,0,
+0,0,0,3,0,0,0,0,0,
+0,0,0,0,3,0,0,0,0,
+0,0,0,0,0,3,0,0,0,
+0,0,0,0,0,0,3,0,0,
+0,0,0,0,0,0,0,3,0,
+0,0,0,0,0,0,0,0,3
+</data>
+ </layer>
+</map>
