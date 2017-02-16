@@ -1,6 +1,9 @@
 #include "HelloWorldScene.h"
 #include "SimpleAudioEngine.h"
 
+
+#include <boost/bind.hpp>
+
 #include <iostream>
 #include <Windows.h>
 
@@ -216,59 +219,7 @@ void HelloWorld::menuNextRound(Ref * sender)
     }
     else {
 
-        if (game->getRound() == 0)
-        { // bid phrase
-            using namespace XGHJ_Client;
-            vector<TMoney> bidPrice;
-            vector<TPosition> bidPosition;
-            XghjObject obj;
 
-            obj = xs->getObj(); CCLOG(obj.content.c_str());
-            if (!obj.getBidPrice(bidPrice, player_size)) {
-                CCLOG("[Error] get bid price list");
-                return;
-            }
-
-            obj = xs->getObj(); CCLOG(obj.content.c_str());
-            if (!obj.getBidPosition(bidPosition, player_size)) {
-                CCLOG("[Error] get bid position list");
-                return;
-            }
-
-            game->Start(bidPrice, bidPosition);
-        }
-        else if (game->getRound() > 0) {
-
-            using namespace XGHJ_Client;
-            XghjObject obj;
-
-            vector<vector<TMilitaryCommand> > MilitaryCommandMap;
-            vector<vector<TDiplomaticCommand> > DiplomaticCommandMap;
-            vector<TPosition > NewCapitalList;
-
-            do {
-                obj = xs->getObj();
-                if (obj.action == XghjObject::GameOver) {
-                    return;
-                }
-            } while (obj.action != XghjObject::NextRound);
-
-            
-
-            if (!obj.getMilitaryCommand(MilitaryCommandMap, DiplomaticCommandMap, NewCapitalList, player_size)) {
-                CCLOG("[Error] get military command");
-                return;
-            }
-
-            if (!game->Run(MilitaryCommandMap, DiplomaticCommandMap, NewCapitalList))
-            {
-                CCLOG("game over");
-                return;
-            }
-
-            CCLOG(obj.content.c_str());
-
-        }
     }
 
     RefreshMap();
@@ -283,7 +234,13 @@ void HelloWorld::menuConnect(Ref * sender)
 {
     int player_size = 0;
 
+    if (thread != nullptr) {
+        return;
+    }
+
     if (io_service == nullptr) io_service = new boost::asio::io_service;
+
+
 
     // init
     try
@@ -305,30 +262,29 @@ void HelloWorld::menuConnect(Ref * sender)
         return;
     }
 
-    // first call
+    // first hello
     try
     {
         using namespace XGHJ_Client;
         XghjObject obj(XghjObject::Viewer, XghjObject::NewGame, "UI Log Viewer");
         xs->send(obj);
-        obj = xs->getObj();
+        obj = xs->getObj(); CCLOG(obj.content.c_str());
         if (obj.action != XghjObject::OK) return;
-        obj = xs->getObj();
-        player_size = atoi(obj.content.c_str());
     }
     catch (exception e) {
         CCLOG(e.what());
         return;
     }
 
-    // game
-    game = new XGHJ::Game(*game_map, military_kernel, player_size);
-
     loadItem->setEnabled(false);
-    nextRoundItem->setEnabled(true);
+    nextRoundItem->setEnabled(false);
 
-    RefreshMap();
-
+    // new thread
+    {
+        boost::function0<void> f = boost::bind(&HelloWorld::web_logic, this);
+        thread = new boost::thread(f);
+        thread->timed_join(boost::posix_time::milliseconds(200));
+    }
 
 }
 
@@ -491,4 +447,83 @@ void HelloWorld::RefreshMap()
     //        else*/ layer_border->setTileGID(16 * map[x][y].owner + 1 + map_border[x][y], Vec2(x, y));
     //    }
     
+}
+
+void HelloWorld::web_logic()
+{
+    int player_size = 0;
+
+    // wait for the start
+    try
+    {
+        using namespace XGHJ_Client;
+        XghjObject obj;
+        obj = xs->getObj(); CCLOG(obj.content.c_str());
+        if (obj.action != XghjObject::NewGame) return;
+        player_size = atoi(obj.content.c_str());
+    }
+    catch (exception e) {
+        CCLOG(e.what());
+        return;
+    }
+
+    // game
+    game = new XGHJ::Game(*game_map, military_kernel, player_size);
+
+
+    while (true) {
+        if (game->getRound() == 0)
+        { // bid phrase
+            using namespace XGHJ_Client;
+            vector<TMoney> bidPrice;
+            vector<TPosition> bidPosition;
+            XghjObject obj;
+
+            obj = xs->getObj(); CCLOG(obj.content.c_str());
+            if (!obj.getBidPrice(bidPrice, player_size)) {
+                CCLOG("[Error] get bid price list");
+                return;
+            }
+
+            obj = xs->getObj(); CCLOG(obj.content.c_str());
+            if (!obj.getBidPosition(bidPosition, player_size)) {
+                CCLOG("[Error] get bid position list");
+                return;
+            }
+
+            game->Start(bidPrice, bidPosition);
+        }
+        else if (game->getRound() > 0) {
+
+            using namespace XGHJ_Client;
+            XghjObject obj;
+
+            vector<vector<TMilitaryCommand> > MilitaryCommandMap;
+            vector<vector<TDiplomaticCommand> > DiplomaticCommandMap;
+            vector<TPosition > NewCapitalList;
+
+            do {
+                obj = xs->getObj(); CCLOG(obj.content.c_str());
+                if (obj.action == XghjObject::GameOver || obj.action == XghjObject::Invalid) {
+                    return;
+                }
+            } while (obj.action != XghjObject::NextRound);
+
+
+            if (!obj.getMilitaryCommand(MilitaryCommandMap, DiplomaticCommandMap, NewCapitalList, player_size)) {
+                CCLOG("[Error] get military command");
+                return;
+            }
+
+            if (!game->Run(MilitaryCommandMap, DiplomaticCommandMap, NewCapitalList))
+            {
+                CCLOG("game over");
+                return;
+            }
+
+            
+        }
+
+        RefreshMap();
+    }
 }

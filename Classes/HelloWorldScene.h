@@ -3,6 +3,8 @@
 
 #include "cocos2d.h"
 
+#include <boost/thread.hpp>
+
 #include "XiangGuHuaJi\game.h"
 #include "LogReader\LogReader.h"
 #include "HuaJiClient\xghj_protocol.h"
@@ -42,6 +44,9 @@ private:
     XGHJ::LogReader *log_reader;
 
     // ÍøÂç
+    void web_logic();
+
+    boost::thread* thread;
     boost::asio::io_service* io_service;
     XGHJ_Client::XghjProtocolSocket* xs;
 };
