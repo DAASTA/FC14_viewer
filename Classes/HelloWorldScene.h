@@ -5,6 +5,7 @@
 
 #include "XiangGuHuaJi\game.h"
 #include "LogReader\LogReader.h"
+#include "HuaJiClient\xghj_protocol.h"
 
 class HelloWorld : public cocos2d::Layer
 {
@@ -22,6 +23,7 @@ private:
     void menuCloseCallback(Ref* sender);
     void menuLoadFile(Ref* sender);
     void menuNextRound(Ref* sender);
+    void menuConnect(Ref* sender);
     void menuTest(Ref* sender);
 
     // 私有函数
@@ -30,13 +32,18 @@ private:
     // ui 指针
     cocos2d::CCTMXTiledMap *_tileMap;
     cocos2d::CCTMXTiledMap *_tileDipMap;
-    cocos2d::MenuItemLabel *loadItem, *nextRoundItem, *testItem;
+    cocos2d::MenuItemLabel *loadItem, *nextRoundItem, *connectItem, *testItem;
     std::vector<cocos2d::Label*>  score_list;
 
     // 游戏
     XGHJ::Map *game_map;
+    vector<vector<float> > military_kernel;
     XGHJ::Game *game;
     XGHJ::LogReader *log_reader;
+
+    // 网络
+    boost::asio::io_service* io_service;
+    XGHJ_Client::XghjProtocolSocket* xs;
 };
 
 #endif // __HELLOWORLD_SCENE_H__

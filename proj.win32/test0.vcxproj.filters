@@ -19,6 +19,9 @@
     <Filter Include="src\MilitaryKernelReader">
       <UniqueIdentifier>{f097dcab-6476-4b92-a122-32eec1018da7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\HuaJiClient">
+      <UniqueIdentifier>{833fdaf5-a451-45a0-b9e1-3e424a2e5a7b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -44,6 +47,9 @@
     </ClCompile>
     <ClCompile Include="..\Classes\LogReader\LogReader.cpp">
       <Filter>src\LogReader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\HuaJiClient\xghj_protocol.cpp">
+      <Filter>src\HuaJiClient</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -79,6 +85,9 @@
     </ClInclude>
     <ClInclude Include="..\Classes\LogReader\LogReader.h">
       <Filter>src\LogReader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\HuaJiClient\xghj_protocol.h">
+      <Filter>src\HuaJiClient</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

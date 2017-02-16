@@ -42,11 +42,13 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\cocos2d\cocos\2d\cocos2dx.props" />
     <Import Project="..\cocos2d\cocos\2d\cocos2d_headers.props" />
+    <Import Project="..\boost.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\cocos2d\cocos\2d\cocos2dx.props" />
     <Import Project="..\cocos2d\cocos\2d\cocos2d_headers.props" />
+    <Import Project="..\boost.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -148,6 +150,7 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)" /D /E /I /F /Y
   <ItemGroup>
     <ClCompile Include="..\Classes\AppDelegate.cpp" />
     <ClCompile Include="..\Classes\HelloWorldScene.cpp" />
+    <ClCompile Include="..\Classes\HuaJiClient\xghj_protocol.cpp" />
     <ClCompile Include="..\Classes\LogReader\LogReader.cpp" />
     <ClCompile Include="..\Classes\MilitaryKernelReader\military_kernel_reader.cpp" />
     <ClCompile Include="..\Classes\XiangGuHuaJi\game.cpp" />
@@ -158,6 +161,7 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)" /D /E /I /F /Y
   <ItemGroup>
     <ClInclude Include="..\Classes\AppDelegate.h" />
     <ClInclude Include="..\Classes\HelloWorldScene.h" />
+    <ClInclude Include="..\Classes\HuaJiClient\xghj_protocol.h" />
     <ClInclude Include="..\Classes\LogReader\LogReader.h" />
     <ClInclude Include="..\Classes\MilitaryKernelReader\military_kernel_reader.h" />
     <ClInclude Include="..\Classes\XiangGuHuaJi\ai.h" />

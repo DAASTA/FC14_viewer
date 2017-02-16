@@ -6,14 +6,13 @@
 
 #include "MilitaryKernelReader\military_kernel_reader.h"
 
-
-
 USING_NS_CC;
 
 using namespace std;
 
 const string map_filename = "Tsinghua.map.txt"; 
 const string kernel_filename = "kernel.txt"; 
+const string web_filename = "web.ini";
 
 Scene* HelloWorld::createScene()
 {
@@ -33,7 +32,6 @@ Scene* HelloWorld::createScene()
 // on "init" you need to initialize your instance
 bool HelloWorld::init()
 {
-    //////////////////////////////
     // super init first
     if ( !Layer::init() )
     {
@@ -43,75 +41,106 @@ bool HelloWorld::init()
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
-    // 菜单按钮 closeItem
-    auto closeItem = MenuItemImage::create(
-        "CloseNormal.png",
-        "CloseSelected.png",
-        CC_CALLBACK_1(HelloWorld::menuCloseCallback, this));
-    closeItem->setPosition(origin + Vec2(visibleSize) - Vec2(closeItem->getContentSize() / 2));
-    // 按钮 Load
-    auto loadLabel = Label::createWithTTF("Load", "fonts/Ubuntu-RI.ttf", 30);
-    loadLabel->setTextColor(Color4B::WHITE);
-    loadItem = MenuItemLabel::create(loadLabel, CC_CALLBACK_1(HelloWorld::menuLoadFile, this));
-    loadItem->setAnchorPoint(Vec2(0.5, 0.5));
-    loadItem->setPosition(origin + Vec2(visibleSize) - Vec2(120, 100));
-    // 按钮 Next Round
-    auto nextRoundLabel = Label::createWithTTF("Next Round", "fonts/Ubuntu-RI.ttf", 30);
-    nextRoundLabel->setTextColor(Color4B::WHITE);
-    nextRoundItem = MenuItemLabel::create(nextRoundLabel, CC_CALLBACK_1(HelloWorld::menuNextRound, this));
-    nextRoundItem->setAnchorPoint(Vec2(0.5, 0.5));
-    nextRoundItem->setPosition(origin + Vec2(visibleSize) - Vec2(120, 150));
-    nextRoundItem->setEnabled(false);
-    // 按钮 Test
-    auto testLabel = Label::createWithTTF("Test", "fonts/Ubuntu-RI.ttf", 30);
-    testLabel->setTextColor(Color4B::WHITE);
-    testItem = MenuItemLabel::create(testLabel, CC_CALLBACK_1(HelloWorld::menuTest, this));
-    testItem->setAnchorPoint(Vec2(0.5, 0.5));
-    testItem->setPosition(origin + Vec2(visibleSize) - Vec2(120, 200));
+    // menu
+    {
+        // 菜单按钮 closeItem
+        auto closeItem = MenuItemImage::create(
+            "CloseNormal.png",
+            "CloseSelected.png",
+            CC_CALLBACK_1(HelloWorld::menuCloseCallback, this));
+        closeItem->setPosition(origin + Vec2(visibleSize) - Vec2(closeItem->getContentSize() / 2));
+        // 按钮 Load
+        auto loadLabel = Label::createWithTTF("Load", "fonts/Ubuntu-RI.ttf", 30);
+        loadLabel->setTextColor(Color4B::WHITE);
+        loadItem = MenuItemLabel::create(loadLabel, CC_CALLBACK_1(HelloWorld::menuLoadFile, this));
+        loadItem->setAnchorPoint(Vec2(0.5, 0.5));
+        loadItem->setPosition(origin + Vec2(visibleSize) - Vec2(120, 100));
+        // 按钮 Next Round
+        auto nextRoundLabel = Label::createWithTTF("Next Round", "fonts/Ubuntu-RI.ttf", 30);
+        nextRoundLabel->setTextColor(Color4B::WHITE);
+        nextRoundItem = MenuItemLabel::create(nextRoundLabel, CC_CALLBACK_1(HelloWorld::menuNextRound, this));
+        nextRoundItem->setAnchorPoint(Vec2(0.5, 0.5));
+        nextRoundItem->setPosition(origin + Vec2(visibleSize) - Vec2(120, 150));
+        nextRoundItem->setEnabled(false);
 
-    // menu 
-    auto menu = Menu::create(closeItem, loadItem, nextRoundItem, testItem, nullptr);
-    menu->setPosition(Vec2::ZERO);
-    this->addChild(menu, 1);
+        // 联网 Connect
+        auto connectLabel = Label::createWithTTF("Connect", "fonts/Ubuntu-RI.ttf", 30);
+        connectLabel->setTextColor(Color4B::WHITE);
+        connectItem = MenuItemLabel::create(connectLabel, CC_CALLBACK_1(HelloWorld::menuConnect, this));
+        connectItem->setAnchorPoint(Vec2(0.5, 0.5));
+        connectItem->setPosition(origin + Vec2(visibleSize) - Vec2(120, 200));
 
-    // 加载 背景图
-    auto background = Sprite::create("map.png");
-    background->setAnchorPoint(Vec2(0, 0));  // anchor point 设置为左下角
-    background->setPosition(Vec2(20, 20)); //  
-    addChild(background, 1); // z-order
+        // 按钮 Test
+        auto testLabel = Label::createWithTTF("Test", "fonts/Ubuntu-RI.ttf", 30);
+        testLabel->setTextColor(Color4B::WHITE);
+        testItem = MenuItemLabel::create(testLabel, CC_CALLBACK_1(HelloWorld::menuTest, this));
+        testItem->setAnchorPoint(Vec2(0.5, 0.5));
+        testItem->setPosition(origin + Vec2(visibleSize) - Vec2(120, 250));
 
-    // 加载 _tileMap 
-    _tileMap = CCTMXTiledMap::create("map.tmx");
-    _tileMap->setAnchorPoint(Vec2(0, 0));  // anchor point 设置为左下角
-    _tileMap->setPosition(Vec2(20, 20)); // 
-    addChild(_tileMap, 100); // z-order
-    // label for tileMap
-    for (int x = 0; x < _tileMap->getMapSize().width; ++x) {
-        auto label = Label::createWithTTF(to_string(x), "fonts/Ubuntu-RI.ttf", 10);
-        label->setAnchorPoint(Vec2(0, 0.5));
-        label->setRotation(-90);
-        label->setPosition(Vec2(16 * x + 28, 580));
-        addChild(label);
-    }
-    for (int y = 0; y < _tileMap->getMapSize().height; ++y) {
-        auto label = Label::createWithTTF(to_string(y), "fonts/Ubuntu-RI.ttf", 10);
-        label->setAnchorPoint(Vec2(1, 0.5));
-        label->setPosition(Vec2(14, 28 + (_tileMap->getMapSize().height - 1 - y) * 16));
-        addChild(label);
+        // menu 
+        auto menu = Menu::create(closeItem, loadItem, nextRoundItem, connectItem, testItem, nullptr);
+        menu->setPosition(Vec2::ZERO);
+        this->addChild(menu, 1);
     }
 
-    // 加载 _tileDipMap
-    _tileDipMap = CCTMXTiledMap::create("dip.tmx");
-    _tileDipMap->setAnchorPoint(Vec2(0, 0));  // anchor point 设置为左下角
-    _tileDipMap->setPosition(Vec2(500, 20)); // 
-    addChild(_tileDipMap, 99); // z-order
-    // label for tileDipMap
-    for (int id = 0; id < 8; ++id) {
-        Label* label = Label::createWithTTF("0/0", "fonts/Ubuntu-RI.ttf", 12);
-        label->setAnchorPoint(Vec2(0.5, 0)); // 下边中点
-        label->setPosition(Vec2(460, 20 + (7 - id) * 16));
-        score_list.push_back(label);
-        addChild(label, 110);
+    // main map
+    {
+        // 加载 背景图
+        auto background = Sprite::create("map.png");
+        background->setAnchorPoint(Vec2(0, 0));  // anchor point 设置为左下角
+        background->setPosition(Vec2(20, 20)); //  
+        addChild(background, 1); // z-order
+
+        // 加载 _tileMap 
+        _tileMap = CCTMXTiledMap::create("map.tmx");
+        _tileMap->setAnchorPoint(Vec2(0, 0));  // anchor point 设置为左下角
+        _tileMap->setPosition(Vec2(20, 20)); // 
+        addChild(_tileMap, 100); // z-order
+        // label for tileMap
+        for (int x = 0; x < _tileMap->getMapSize().width; ++x) {
+            auto label = Label::createWithTTF(to_string(x), "fonts/Ubuntu-RI.ttf", 10);
+            label->setAnchorPoint(Vec2(0, 0.5));
+            label->setRotation(-90);
+            label->setPosition(Vec2(16 * x + 28, 580));
+            addChild(label);
+        }
+        for (int y = 0; y < _tileMap->getMapSize().height; ++y) {
+            auto label = Label::createWithTTF(to_string(y), "fonts/Ubuntu-RI.ttf", 10);
+            label->setAnchorPoint(Vec2(1, 0.5));
+            label->setPosition(Vec2(14, 28 + (_tileMap->getMapSize().height - 1 - y) * 16));
+            addChild(label);
+        }
+    }
+
+    // dip map
+    {
+        // 加载 _tileDipMap
+        _tileDipMap = CCTMXTiledMap::create("dip.tmx");
+        _tileDipMap->setAnchorPoint(Vec2(0, 0));  // anchor point 设置为左下角
+        _tileDipMap->setPosition(Vec2(500, 20)); // 
+        addChild(_tileDipMap, 99); // z-order
+        // label for tileDipMap
+        for (int id = 0; id < 8; ++id) {
+            Label* label = Label::createWithTTF("0/0", "fonts/Ubuntu-RI.ttf", 12);
+            label->setAnchorPoint(Vec2(0.5, 0)); // 下边中点
+            label->setPosition(Vec2(460, 20 + (7 - id) * 16));
+            score_list.push_back(label);
+            addChild(label, 110);
+        }
+    }
+
+    // game
+    {
+        // load map
+        game_map = new XGHJ::Map();
+        if (!game_map->easy_load(
+            FileUtils::getInstance()->fullPathForFilename(map_filename))) {
+            CCLOG("Cannot load map");
+            return false;
+        }
+        // load kernel
+        XGHJ::loadMilitaryKernel(military_kernel,
+            FileUtils::getInstance()->fullPathForFilename((kernel_filename)));
     }
 
     return true;
@@ -140,25 +169,13 @@ void HelloWorld::menuLoadFile(Ref * sender)
     {
         //szFileName为获取的文件名  
 
-        // load map
-        game_map = new XGHJ::Map();
-        if (!game_map->easy_load(
-                FileUtils::getInstance()->fullPathForFilename(map_filename))) {
-            cerr << "Cannot load map" << endl;
-            return;
-        }
-        // load kernel
-        vector<vector<float> > military_kernel;
-        XGHJ::loadMilitaryKernel(military_kernel, 
-            FileUtils::getInstance()->fullPathForFilename((kernel_filename)));
-
         // load log file
         log_reader = new XGHJ::LogReader();
         char buffer[1024];
         int len = WideCharToMultiByte(0, 0, szFileName, wcslen(szFileName), buffer, 1024, NULL, NULL);
         buffer[len] = '\0';
         if (log_reader->load(buffer)<=0) {
-            cerr << "Cannot load log file " << buffer << endl;
+            CCLOG("Cannot load log file ");
             return;
         }
 
@@ -181,24 +198,138 @@ void HelloWorld::menuNextRound(Ref * sender)
     if (game == nullptr) return;
 
     TRound round = game->getRound();
-    
+    int player_size = game->getPlayerSize();
+
     vector<vector<TMilitaryCommand>> MilitaryCommandMap;
     vector<vector<TDiplomaticCommand>> DiplomaticCommandMap;
     vector<TPosition> NewCapitalList;
-    if (log_reader->get(round,
+
+    if (loadItem->isEnabled()) {
+        if (log_reader->get(round,
             MilitaryCommandMap,
             DiplomaticCommandMap,
             NewCapitalList))
-        game->Run(
-            MilitaryCommandMap,
-            DiplomaticCommandMap,
-            NewCapitalList);
+            game->Run(
+                MilitaryCommandMap,
+                DiplomaticCommandMap,
+                NewCapitalList);
+    }
+    else {
+
+        if (game->getRound() == 0)
+        { // bid phrase
+            using namespace XGHJ_Client;
+            vector<TMoney> bidPrice;
+            vector<TPosition> bidPosition;
+            XghjObject obj;
+
+            obj = xs->getObj(); CCLOG(obj.content.c_str());
+            if (!obj.getBidPrice(bidPrice, player_size)) {
+                CCLOG("[Error] get bid price list");
+                return;
+            }
+
+            obj = xs->getObj(); CCLOG(obj.content.c_str());
+            if (!obj.getBidPosition(bidPosition, player_size)) {
+                CCLOG("[Error] get bid position list");
+                return;
+            }
+
+            game->Start(bidPrice, bidPosition);
+        }
+        else if (game->getRound() > 0) {
+
+            using namespace XGHJ_Client;
+            XghjObject obj;
+
+            vector<vector<TMilitaryCommand> > MilitaryCommandMap;
+            vector<vector<TDiplomaticCommand> > DiplomaticCommandMap;
+            vector<TPosition > NewCapitalList;
+
+            do {
+                obj = xs->getObj();
+                if (obj.action == XghjObject::GameOver) {
+                    return;
+                }
+            } while (obj.action != XghjObject::NextRound);
+
+            
+
+            if (!obj.getMilitaryCommand(MilitaryCommandMap, DiplomaticCommandMap, NewCapitalList, player_size)) {
+                CCLOG("[Error] get military command");
+                return;
+            }
+
+            if (!game->Run(MilitaryCommandMap, DiplomaticCommandMap, NewCapitalList))
+            {
+                CCLOG("game over");
+                return;
+            }
+
+            CCLOG(obj.content.c_str());
+
+        }
+    }
 
     RefreshMap();
 
-    if (game->getRound() >= log_reader->getRound())
-        nextRoundItem->setEnabled(false);
+    if (log_reader!=nullptr)
+        if (game->getRound() >= log_reader->getRound())
+            nextRoundItem->setEnabled(false);
     
+}
+
+void HelloWorld::menuConnect(Ref * sender)
+{
+    int player_size = 0;
+
+    if (io_service == nullptr) io_service = new boost::asio::io_service;
+
+    // init
+    try
+    {
+        std::ifstream web_ifs(FileUtils::getInstance()->fullPathForFilename(web_filename));
+        std::string server_ip;
+        int server_port;
+        if (!web_ifs.is_open()) return;
+        web_ifs >> server_ip;
+        web_ifs >> server_port;
+
+        xs = new XGHJ_Client::XghjProtocolSocket(*io_service, server_ip, server_port);
+        if (!xs->isValid()) return;
+        io_service->run();
+
+    }
+    catch (exception e) {
+        CCLOG(e.what());
+        return;
+    }
+
+    // first call
+    try
+    {
+        using namespace XGHJ_Client;
+        XghjObject obj(XghjObject::Viewer, XghjObject::NewGame, "UI Log Viewer");
+        xs->send(obj);
+        obj = xs->getObj();
+        if (obj.action != XghjObject::OK) return;
+        obj = xs->getObj();
+        player_size = atoi(obj.content.c_str());
+    }
+    catch (exception e) {
+        CCLOG(e.what());
+        return;
+    }
+
+    // game
+    game = new XGHJ::Game(*game_map, military_kernel, player_size);
+
+    loadItem->setEnabled(false);
+    nextRoundItem->setEnabled(true);
+
+    RefreshMap();
+
+
 }
 
 void HelloWorld::menuTest(Ref * sender)
@@ -231,6 +362,58 @@ void HelloWorld::RefreshMap()
     vector<TMoney> inc = game->getPlayerIncome();
     vector<int> rank = game->getPlayerRanking();
 
+    CCLOG("refresh map");
+
+    // military icon
+    if (log_reader != nullptr)
+    {
+        auto layer_icon = _tileMap->getLayer("icon");
+        vector<vector<TId> > tmc_map(cols,
+            vector<TId>(rows, UNKNOWN_PLAYER_ID));
+        vector<vector<TMilitaryCommand>> MilitaryCommandMap;
+        vector<vector<TDiplomaticCommand>> DiplomaticCommandMap;
+        vector<TPosition> NewCapitalList;
+        if (log_reader->get(game->getRound(),
+            MilitaryCommandMap,
+            DiplomaticCommandMap,
+            NewCapitalList)) {
+
+            for (TId id = 0; id < player_size; ++id)
+                for (size_t i = 0; i < MilitaryCommandMap[id].size(); ++i) {
+                    TMilitaryCommand& tmc = MilitaryCommandMap[id][i];
+                    if (tmc.bomb_size > 0 && tmc.place.x < cols && tmc.place.y < rows)
+                        tmc_map[tmc.place.x][tmc.place.y] = id;
+
+                }
+            for (TId id = 0; id < player_size; ++id)
+                if (NewCapitalList[id].x < cols && NewCapitalList[id].y) {
+                    tmc_map[NewCapitalList[id].x][NewCapitalList[id].y] = id;
+                }
+
+            for (TMap x = 0; x < cols; ++x)
+                for (TMap y = 0; y < rows; ++y) {
+                    if (game->isPlayer(tmc_map[x][y])) {
+                        layer_icon->setTileGID(11 + tmc_map[x][y], Vec2(x, y));
+                    }
+                    else layer_icon->setTileGID(0, Vec2(x, y));
+                }
+
+        }
+        else {
+            for (TMap x = 0; x < cols; ++x)
+                for (TMap y = 0; y < rows; ++y)
+                    layer_icon->setTileGID(0, Vec2(x, y));
+        }
+    }
+    else {
+        auto layer_icon = _tileMap->getLayer("icon");
+        for (TMap x = 0; x < cols; ++x)
+            for (TMap y = 0; y < rows; ++y)
+                layer_icon->setTileGID(0, Vec2(x, y));
+
+    }
+
+
     // map color & shadow
     {
         auto layer_color = _tileMap->getLayer("color");
@@ -251,46 +434,7 @@ void HelloWorld::RefreshMap()
             }
     }
 
-    // military icon
-    {
-        auto layer_icon = _tileMap->getLayer("icon");
-        vector<vector<TId> > tmc_map(cols,
-            vector<TId>(rows, UNKNOWN_PLAYER_ID));  
-        vector<vector<TMilitaryCommand>> MilitaryCommandMap;
-        vector<vector<TDiplomaticCommand>> DiplomaticCommandMap;
-        vector<TPosition> NewCapitalList;
-        if (log_reader->get(game->getRound(),
-                MilitaryCommandMap,
-                DiplomaticCommandMap,
-                NewCapitalList)) {
 
-            for (TId id = 0; id < player_size; ++id)
-                for (size_t i = 0; i < MilitaryCommandMap[id].size(); ++i) {
-                    TMilitaryCommand& tmc = MilitaryCommandMap[id][i];
-                    if (tmc.bomb_size > 0 && tmc.place.x < cols && tmc.place.y < rows)
-                        tmc_map[tmc.place.x][tmc.place.y] = id;
-                    
-                }
-            for (TId id = 0; id < player_size; ++id)
-                if (NewCapitalList[id].x < cols && NewCapitalList[id].y) {
-                    tmc_map[NewCapitalList[id].x][NewCapitalList[id].y] = id;
-                }
-
-            for (TMap x = 0; x < cols; ++x) 
-                for (TMap y = 0; y < rows; ++y) {
-                    if (game->isPlayer(tmc_map[x][y])) {
-                        layer_icon->setTileGID(11 + tmc_map[x][y], Vec2(x, y));
-                    }
-                    else layer_icon->setTileGID(0, Vec2(x, y));
-                }
-            
-        }
-        else {
-            for (TMap x = 0; x < cols; ++x)
-                for (TMap y = 0; y < rows; ++y) 
-                    layer_icon->setTileGID(0, Vec2(x, y));
-        }
-    }
 
     // dip
     {
