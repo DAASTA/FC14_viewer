@@ -16,6 +16,7 @@ using namespace std;
 const string map_filename = "Tsinghua.map.txt"; 
 const string kernel_filename = "kernel.txt"; 
 const string web_filename = "web.ini";
+const string font_filename = "fonts/font.ttf";
 
 Scene* HelloWorld::createScene()
 {
@@ -44,44 +45,55 @@ bool HelloWorld::init()
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
+    // background
+    {
+        auto background = Sprite::create("background.png");
+        background->setAnchorPoint(Vec2(0, 0));  // anchor point 设置为左下角
+        background->setPosition(Vec2(0, 0)); //  
+        addChild(background, 0); // z-order
+    }
+
     // menu
     {
         // 菜单按钮 closeItem
-        auto closeItem = MenuItemImage::create(
+        /*auto closeItem = MenuItemImage::create(
             "CloseNormal.png",
             "CloseSelected.png",
             CC_CALLBACK_1(HelloWorld::menuCloseCallback, this));
-        closeItem->setPosition(origin + Vec2(visibleSize) - Vec2(closeItem->getContentSize() / 2));
+        closeItem->setPosition(origin + Vec2(visibleSize) - Vec2(closeItem->getContentSize() / 2));*/
         // 按钮 Load
-        auto loadLabel = Label::createWithTTF("Load", "fonts/Ubuntu-RI.ttf", 30);
-        loadLabel->setTextColor(Color4B::WHITE);
+        auto loadLabel = Label::createWithTTF("Load", font_filename, 48);
         loadItem = MenuItemLabel::create(loadLabel, CC_CALLBACK_1(HelloWorld::menuLoadFile, this));
+        loadItem->setColor(Color3B::WHITE);
+        loadItem->setDisabledColor(Color3B::GRAY);
         loadItem->setAnchorPoint(Vec2(0.5, 0.5));
-        loadItem->setPosition(origin + Vec2(visibleSize) - Vec2(120, 100));
+        loadItem->setPosition(origin + Vec2(visibleSize) - Vec2(140, 100));
         // 按钮 Next Round
-        auto nextRoundLabel = Label::createWithTTF("Next Round", "fonts/Ubuntu-RI.ttf", 30);
-        nextRoundLabel->setTextColor(Color4B::WHITE);
+        auto nextRoundLabel = Label::createWithTTF("Next", font_filename, 48);
         nextRoundItem = MenuItemLabel::create(nextRoundLabel, CC_CALLBACK_1(HelloWorld::menuNextRound, this));
+        nextRoundItem->setColor(Color3B::WHITE);
+        nextRoundItem->setDisabledColor(Color3B::GRAY);
         nextRoundItem->setAnchorPoint(Vec2(0.5, 0.5));
-        nextRoundItem->setPosition(origin + Vec2(visibleSize) - Vec2(120, 150));
+        nextRoundItem->setPosition(origin + Vec2(visibleSize) - Vec2(140, 150));
         nextRoundItem->setEnabled(false);
 
         // 联网 Connect
-        auto connectLabel = Label::createWithTTF("Connect", "fonts/Ubuntu-RI.ttf", 30);
-        connectLabel->setTextColor(Color4B::WHITE);
+        auto connectLabel = Label::createWithTTF("Connect", font_filename, 36);
         connectItem = MenuItemLabel::create(connectLabel, CC_CALLBACK_1(HelloWorld::menuConnect, this));
+        connectItem->setColor(Color3B::WHITE);
+        connectItem->setDisabledColor(Color3B::GRAY);
         connectItem->setAnchorPoint(Vec2(0.5, 0.5));
-        connectItem->setPosition(origin + Vec2(visibleSize) - Vec2(120, 200));
+        connectItem->setPosition(origin + Vec2(visibleSize) - Vec2(140, 200));
 
         // 按钮 Test
-        auto testLabel = Label::createWithTTF("Test", "fonts/Ubuntu-RI.ttf", 30);
-        testLabel->setTextColor(Color4B::WHITE);
+        /*auto testLabel = Label::createWithTTF("Test", font_filename, 36);
+        testLabel->setTextColor(Color4B::BLACK);
         testItem = MenuItemLabel::create(testLabel, CC_CALLBACK_1(HelloWorld::menuTest, this));
         testItem->setAnchorPoint(Vec2(0.5, 0.5));
-        testItem->setPosition(origin + Vec2(visibleSize) - Vec2(120, 250));
+        testItem->setPosition(origin + Vec2(visibleSize) - Vec2(140, 250));*/
 
         // menu 
-        auto menu = Menu::create(closeItem, loadItem, nextRoundItem, connectItem, testItem, nullptr);
+        auto menu = Menu::create(/*closeItem,*/ loadItem, nextRoundItem, connectItem, /*testItem,*/ nullptr);
         menu->setPosition(Vec2::ZERO);
         this->addChild(menu, 1);
     }
@@ -100,19 +112,37 @@ bool HelloWorld::init()
         _tileMap->setPosition(Vec2(20, 20)); // 
         addChild(_tileMap, 100); // z-order
         // label for tileMap
-        for (int x = 0; x < _tileMap->getMapSize().width; ++x) {
-            auto label = Label::createWithTTF(to_string(x), "fonts/Ubuntu-RI.ttf", 10);
+        /*for (int x = 0; x < _tileMap->getMapSize().width; ++x) {
+            auto label = Label::createWithTTF(to_string(x), font_filename, 16);
             label->setAnchorPoint(Vec2(0, 0.5));
             label->setRotation(-90);
             label->setPosition(Vec2(16 * x + 28, 580));
             addChild(label);
         }
         for (int y = 0; y < _tileMap->getMapSize().height; ++y) {
-            auto label = Label::createWithTTF(to_string(y), "fonts/Ubuntu-RI.ttf", 10);
+            auto label = Label::createWithTTF(to_string(y), font_filename, 16);
             label->setAnchorPoint(Vec2(1, 0.5));
             label->setPosition(Vec2(14, 28 + (_tileMap->getMapSize().height - 1 - y) * 16));
             addChild(label);
-        }
+        }*/
+    }
+
+    // touch event
+    {
+        // position_label
+        position_label = Label::createWithTTF("x=0 y=0", font_filename, 36);
+        position_label->setColor(Color3B::WHITE);
+        position_label->setAnchorPoint(Vec2(0.5, 0.5));
+        position_label->setPosition(Vec2(origin + Vec2(visibleSize) - Vec2(140, 300)));
+        this->addChild(position_label, 1);
+
+        auto dispatcher = Director::getInstance()->getEventDispatcher();
+        auto myListener = EventListenerTouchOneByOne::create();
+        myListener->setSwallowTouches(true);
+        myListener->onTouchBegan = CC_CALLBACK_2(HelloWorld::touchPosition, this);
+        myListener->onTouchMoved = CC_CALLBACK_2(HelloWorld::touchPosition, this);
+        myListener->onTouchEnded = CC_CALLBACK_2(HelloWorld::touchPosition, this);
+        dispatcher->addEventListenerWithSceneGraphPriority(myListener, this);
     }
 
     // dip map
@@ -120,14 +150,23 @@ bool HelloWorld::init()
         // 加载 _tileDipMap
         _tileDipMap = CCTMXTiledMap::create("dip.tmx");
         _tileDipMap->setAnchorPoint(Vec2(0, 0));  // anchor point 设置为左下角
-        _tileDipMap->setPosition(Vec2(500, 20)); // 
+        _tileDipMap->setPosition(Vec2(530, 20)); // 
         addChild(_tileDipMap, 99); // z-order
         // label for tileDipMap
         for (int id = 0; id < 8; ++id) {
-            Label* label = Label::createWithTTF("0/0", "fonts/Ubuntu-RI.ttf", 12);
+            Label* label = Label::createWithTTF("0/0", font_filename, 18);
+            label->setColor(Color3B::WHITE);
             label->setAnchorPoint(Vec2(0.5, 0)); // 下边中点
-            label->setPosition(Vec2(460, 20 + (7 - id) * 16));
+            label->setPosition(Vec2(480, 20 + (7 - id) * 16));
             score_list.push_back(label);
+            addChild(label, 110);
+        }
+        {
+            int id = -1;
+            Label* label = Label::createWithTTF("SAV/INC", font_filename, 18);
+            label->setColor(Color3B::WHITE);
+            label->setAnchorPoint(Vec2(0.5, 0)); // 下边中点
+            label->setPosition(Vec2(480, 20 + (7 - id) * 16));
             addChild(label, 110);
         }
     }
@@ -148,6 +187,8 @@ bool HelloWorld::init()
 
     return true;
 }
+
+
 
 
 void HelloWorld::menuCloseCallback(Ref* sender)
@@ -278,6 +319,7 @@ void HelloWorld::menuConnect(Ref * sender)
 
     loadItem->setEnabled(false);
     nextRoundItem->setEnabled(false);
+    connectItem->setEnabled(false);
 
     // new thread
     {
@@ -305,13 +347,25 @@ void HelloWorld::menuTest(Ref * sender)
     RefreshMap();
 }
 
+bool HelloWorld::touchPosition(cocos2d::Touch* touch, cocos2d::Event* event)
+{
+    Vec2 p = touch->getLocation();
+    int x = (p.x - _tileMap->getPosition().x) / 16;
+    int y = (_tileMap->getContentSize().height - (p.y - _tileMap->getPosition().y)) / 16;
+    
+    if (x < 0 || x >= _tileMap->getMapSize().width
+        || y < 0 || y >= _tileMap->getMapSize().height) return false;
+    position_label->setString("x=" + to_string(x) + " y=" + to_string(y));
+    return true;
+}
+
 void HelloWorld::RefreshMap()
 {
 
     if (game == nullptr) return;
-    int cols = game->getCols();
-    int rows = game->getRows();
-    int player_size = game->getPlayerSize();
+    TMap cols = game->getCols();
+    TMap rows = game->getRows();
+    TId player_size = game->getPlayerSize();
     vector<vector<MapPointInfo> > map = game->getGlobalMap();
     vector<vector<TDiplomaticStatus> > dip = game->getDiplomacy();
     vector<TMoney> sav = game->getPlayerSaving();
@@ -321,7 +375,7 @@ void HelloWorld::RefreshMap()
     CCLOG("refresh map");
 
     // military icon
-    if (log_reader != nullptr)
+    if (loadItem->isEnabled())
     {
         auto layer_icon = _tileMap->getLayer("icon");
         vector<vector<TId> > tmc_map(cols,
@@ -403,12 +457,12 @@ void HelloWorld::RefreshMap()
             layer_icon->setTileGID(11 + rank[i], Vec2(0, 1 + i));
             order[rank[i]] = i;
         }
-        for (TId id = 0; id < player_size; ++id) {
+        /*for (TId id = 0; id < player_size; ++id) {
             if (game->isAlive(id))
                 layer_icon->setTileGID(11 + id, Vec2(1 + id, 0));
             else
                 layer_icon->setTileGID(0, Vec2(1 + id, 0));
-        }
+        }*/
 
         for (TId i1=0; i1<player_size; ++i1)
             for (TId i2 = 0; i2 < player_size; ++i2) {

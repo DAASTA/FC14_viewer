@@ -3,12 +3,12 @@
  <tileset firstgid="1" name="dip" tilewidth="16" tileheight="16" tilecount="10" columns="10">
   <image source="P/dip.png" width="160" height="16"/>
  </tileset>
- <tileset firstgid="11" name="icon" tilewidth="16" tileheight="16" tilecount="10" columns="10">
-  <image source="P/icon.png" width="160" height="16"/>
+ <tileset firstgid="11" name="dip_icon" tilewidth="16" tileheight="16" tilecount="20" columns="10">
+  <image source="P/dip_icon.png" width="160" height="32"/>
  </tileset>
  <layer name="icon" width="9" height="9">
   <data encoding="csv">
-1,11,12,13,14,15,16,17,18,
+1,21,22,23,24,25,26,27,28,
 11,1,1,1,1,1,1,1,1,
 12,1,1,1,1,1,1,1,1,
 13,1,1,1,1,1,1,1,1,

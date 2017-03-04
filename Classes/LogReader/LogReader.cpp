@@ -27,17 +27,18 @@ namespace XGHJ {
 
             // _player_size
             ifs >> t; _player_size = t;
+            if (ifs.eof()) return -1;
 
             // Bid phase
             // _bid_price
             for (int i = 0; i < _player_size; ++i) {
-                ifs >> t; _bid_price.push_back((TMoney)t);
+                ifs >> t; _bid_price.push_back((TMoney)t); if (ifs.eof()) return -1;
             }
             // _bid_pos
             for (int i = 0; i < _player_size; ++i) {
                 TPosition p;
-                ifs >> t; p.x = t;
-                ifs >> t; p.y = t;
+                ifs >> t; p.x = t; if (ifs.eof()) return -1;
+                ifs >> t; p.y = t; if (ifs.eof()) return -1;
                 _bid_pos.push_back(p);
             }
 

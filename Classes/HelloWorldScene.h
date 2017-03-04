@@ -21,12 +21,14 @@ public:
 
 private:
 
-    // 响应函数
-    void menuCloseCallback(Ref* sender);
-    void menuLoadFile(Ref* sender);
-    void menuNextRound(Ref* sender);
-    void menuConnect(Ref* sender);
-    void menuTest(Ref* sender);
+    // menu 响应函数
+    void menuCloseCallback(cocos2d::Ref* sender);
+    void menuLoadFile(cocos2d::Ref* sender);
+    void menuNextRound(cocos2d::Ref* sender);
+    void menuConnect(cocos2d::Ref* sender);
+    void menuTest(cocos2d::Ref* sender);
+    // touch 响应函数
+    bool touchPosition(cocos2d::Touch* touch, cocos2d::Event* event);
 
     // 私有函数
     void RefreshMap();
@@ -35,6 +37,7 @@ private:
     cocos2d::CCTMXTiledMap *_tileMap;
     cocos2d::CCTMXTiledMap *_tileDipMap;
     cocos2d::MenuItemLabel *loadItem, *nextRoundItem, *connectItem, *testItem;
+    cocos2d::Label *position_label;
     std::vector<cocos2d::Label*>  score_list;
 
     // 游戏

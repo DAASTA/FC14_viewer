@@ -39,12 +39,15 @@ bool AppDelegate::applicationDidFinishLaunching() {
     auto glview = director->getOpenGLView();
     if(!glview) {
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32) || (CC_TARGET_PLATFORM == CC_PLATFORM_MAC) || (CC_TARGET_PLATFORM == CC_PLATFORM_LINUX)
-        glview = GLViewImpl::createWithRect("XiangGuHuaJi Log Viewer", cocos2d::Rect(0, 0, designResolutionSize.width, designResolutionSize.height));
+        glview = GLViewImpl::createWithRect("FC14 Viewer", cocos2d::Rect(0, 0, designResolutionSize.width, designResolutionSize.height));
 #else
-        glview = GLViewImpl::create("XiangGuHuaJi Log Viewer");
+        glview = GLViewImpl::create("FC14 Viewer");
 #endif
         director->setOpenGLView(glview);
     }
+
+    // 设置背景色
+    //director->setClearColor(Color4F(1.0, 1.0, 1.0, 1.0));
 
     // turn on display FPS   不显示左下角的Debug信息
     director->setDisplayStats(false);
