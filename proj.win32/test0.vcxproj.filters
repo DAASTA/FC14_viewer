@@ -16,9 +16,6 @@
     <Filter Include="src\LogReader">
       <UniqueIdentifier>{65c7a1bf-2840-4c81-b27e-5171233cec27}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\MilitaryKernelReader">
-      <UniqueIdentifier>{f097dcab-6476-4b92-a122-32eec1018da7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\HuaJiClient">
       <UniqueIdentifier>{833fdaf5-a451-45a0-b9e1-3e424a2e5a7b}</UniqueIdentifier>
     </Filter>
@@ -42,14 +39,14 @@
     <ClCompile Include="..\Classes\XiangGuHuaJi\player.cpp">
       <Filter>src\XiangGuHuaJi</Filter>
     </ClCompile>
-    <ClCompile Include="..\Classes\MilitaryKernelReader\military_kernel_reader.cpp">
-      <Filter>src\MilitaryKernelReader</Filter>
-    </ClCompile>
     <ClCompile Include="..\Classes\LogReader\LogReader.cpp">
       <Filter>src\LogReader</Filter>
     </ClCompile>
     <ClCompile Include="..\Classes\HuaJiClient\xghj_protocol.cpp">
       <Filter>src\HuaJiClient</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\XiangGuHuaJi\military_kernel.cpp">
+      <Filter>src\XiangGuHuaJi</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -80,14 +77,14 @@
     <ClInclude Include="..\Classes\XiangGuHuaJi\definition.h">
       <Filter>src\XiangGuHuaJi</Filter>
     </ClInclude>
-    <ClInclude Include="..\Classes\MilitaryKernelReader\military_kernel_reader.h">
-      <Filter>src\MilitaryKernelReader</Filter>
-    </ClInclude>
     <ClInclude Include="..\Classes\LogReader\LogReader.h">
       <Filter>src\LogReader</Filter>
     </ClInclude>
     <ClInclude Include="..\Classes\HuaJiClient\xghj_protocol.h">
       <Filter>src\HuaJiClient</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\XiangGuHuaJi\military_kernel.h">
+      <Filter>src\XiangGuHuaJi</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

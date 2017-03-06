@@ -7,7 +7,7 @@
 #include <iostream>
 #include <Windows.h>
 
-#include "MilitaryKernelReader\military_kernel_reader.h"
+#include "XiangGuHuaJi/military_kernel.h"
 
 USING_NS_CC;
 
@@ -181,7 +181,7 @@ bool HelloWorld::init()
             return false;
         }
         // load kernel
-        XGHJ::loadMilitaryKernel(military_kernel,
+        loadMilitaryKernel(military_kernel,
             FileUtils::getInstance()->fullPathForFilename((kernel_filename)));
     }
 
