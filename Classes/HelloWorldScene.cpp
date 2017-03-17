@@ -479,28 +479,55 @@ void HelloWorld::RefreshMap()
                 
     }
 
+    {
+        auto layer_border = _tileMap->getLayer("border");
+        auto layer_border_bak = _tileMap->getLayer("border_bak");
+        auto layer_allied = _tileMap->getLayer("allied");
+        vector<vector<int> > map_border(cols,
+            vector<int>(rows, 0));
+        vector<vector<int> > map_allied(cols,
+            vector<int>(rows, 0));
+        int dx[] = { 0,  1,  0, -1 };
+        int dy[] = { -1,  0,  1,  0 };
+        int bd[] = { 1, 2, 4, 8 };
 
-    //auto layer_border = _tileMap->getLayer("border");
-    //vector<vector<int> > map_border(cols,
-    //    vector<int>(rows, 0));
-    //int dx[] = { 0,  1,  0, -1};
-    //int dy[] = {-1,  0,  1,  0};
-    //int bd[] = {1, 2, 4, 8};
-    //for (int x = 0; x < cols; ++x) 
-    //    for (int y = 0; y < rows; ++y) {
-    //        if (!game->isPlayer(map[x][y].owner)) {
-    //            layer_border->setTileGID(0, Vec2(x, y));
-    //            continue;
-    //        }
-    //        for (int i = 0; i < 4; ++i) {
-    //            int lx = x + dx[i], ly = y + dy[i];
-    //            if (lx < 0 || lx >= cols || ly < 0 || ly >= rows) map_border[x][y] += bd[i];
-    //            else if (map[lx][ly].owner != map[x][y].owner) map_border[x][y] += bd[i];
-    //        }
-    //        /*if (map_border[x][y] == 0)layer_border->setTileGID(0, Vec2(x, y));
-    //        else*/ layer_border->setTileGID(16 * map[x][y].owner + 1 + map_border[x][y], Vec2(x, y));
-    //    }
-    
+        for (int x = 0; x < cols; ++x)
+            for (int y = 0; y < rows; ++y)
+                layer_border_bak->setTileGID(layer_border->getTileGIDAt(Vec2(x, y)), Vec2(x, y));
+
+        for (int x = 0; x < cols; ++x)
+            for (int y = 0; y < rows; ++y) {
+                if (!game->isPlayer(map[x][y].owner)) {
+                    layer_border->setTileGID(0, Vec2(x, y));
+                    continue;
+                }
+                for (int i = 0; i < 4; ++i) {
+                    int lx = x + dx[i], ly = y + dy[i];
+                    if (lx < 0 || lx >= cols || ly < 0 || ly >= rows) map_border[x][y] ;
+                    else if (!game->isPlayer(map[lx][ly].owner)) map_border[x][y] ;
+                    else if (dip[map[lx][ly].owner][map[x][y].owner] == AtWar) map_border[x][y] += bd[i];
+                }
+                /*if (map_border[x][y] == 0)layer_border->setTileGID(0, Vec2(x, y));
+                else*/ layer_border->setTileGID(16 * map[x][y].owner + 23 + map_border[x][y], Vec2(x, y));
+            }
+
+        for (int x = 0; x < cols; ++x)
+            for (int y = 0; y < rows; ++y) {
+                if (!game->isPlayer(map[x][y].owner)) {
+                    layer_allied->setTileGID(0, Vec2(x, y));
+                    continue;
+                }
+                for (int i = 0; i < 4; ++i) {
+                    int lx = x + dx[i], ly = y + dy[i];
+                    if (lx < 0 || lx >= cols || ly < 0 || ly >= rows) map_allied[x][y];
+                    else if (!game->isPlayer(map[lx][ly].owner)) map_allied[x][y];
+                    else if (map[lx][ly].owner == map[x][y].owner) map_allied[x][y];
+                    else if (dip[map[lx][ly].owner][map[x][y].owner] == Allied) map_allied[x][y] += bd[i];
+                }
+                /*if (map_border[x][y] == 0)layer_border->setTileGID(0, Vec2(x, y));
+                else*/ layer_allied->setTileGID(16 * map[x][y].owner + 151 + map_allied[x][y], Vec2(x, y));
+            }
+    }
 }
 
 void HelloWorld::web_logic()
