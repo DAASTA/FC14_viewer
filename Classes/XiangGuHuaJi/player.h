@@ -36,7 +36,7 @@ using namespace std;
 
 typedef void (*TPlayerAi)(Info& info); 
 typedef TMoney (*TBirthplacePrice)(BaseMap* map);
-typedef TPosition (*TBirthplace)(vector<TPosition> posSelected, BaseMap* map);
+typedef TPosition (*TBirthplace)(vector<TPosition>& posSelected, BaseMap* map);
 
 class Player
 {

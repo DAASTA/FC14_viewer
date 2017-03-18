@@ -25,6 +25,11 @@ namespace XGHJ {
             std::vector<TMoney>& bidPrice,
             std::vector<TPosition>& posChoosed);
 
+        std::string getUserName(int i) { 
+            if (i<_user_name_list.size()) return _user_name_list[i];
+            else return "P" + std::to_string(i);
+        }
+
         inline int getPlayerSize() { return _player_size; }
         inline TRound getRound() { return _round+1; }
 
@@ -39,6 +44,8 @@ namespace XGHJ {
         std::vector<std::vector<std::vector<TMilitaryCommand> > > _military_command_list;
         std::vector<std::vector<std::vector<TDiplomaticCommand> > > _diplomatic_command_list;
         std::vector<std::vector<TPosition> > _new_capital_list_list;
+
+        std::vector<std::string> _user_name_list;
     };
 }
 

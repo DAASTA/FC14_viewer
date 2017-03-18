@@ -15,7 +15,7 @@ using namespace std;
 
 const string map_filename = "Tsinghua.map.txt"; 
 const string kernel_filename = "kernel.txt"; 
-const string web_filename = "web.ini";
+const string web_filename = "web_config.txt";
 const string font_filename = "fonts/font.ttf";
 
 Scene* HelloWorld::createScene()
@@ -33,7 +33,7 @@ Scene* HelloWorld::createScene()
     return scene;
 }
 
-// on "init" you need to initialize your instance
+// 初始化 on "init" you need to initialize your instance
 bool HelloWorld::init()
 {
     // super init first
@@ -44,6 +44,8 @@ bool HelloWorld::init()
     
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
+
+    ui_status = UiStatusReady;
 
     // background
     {
@@ -64,14 +66,14 @@ bool HelloWorld::init()
         // 按钮 Load
         auto loadLabel = Label::createWithTTF("Load", font_filename, 48);
         loadItem = MenuItemLabel::create(loadLabel, CC_CALLBACK_1(HelloWorld::menuLoadFile, this));
-        loadItem->setColor(Color3B::WHITE);
+        loadItem->setColor(Color3B::BLACK);
         loadItem->setDisabledColor(Color3B::GRAY);
         loadItem->setAnchorPoint(Vec2(0.5, 0.5));
         loadItem->setPosition(origin + Vec2(visibleSize) - Vec2(140, 100));
         // 按钮 Next Round
         auto nextRoundLabel = Label::createWithTTF("Next", font_filename, 48);
         nextRoundItem = MenuItemLabel::create(nextRoundLabel, CC_CALLBACK_1(HelloWorld::menuNextRound, this));
-        nextRoundItem->setColor(Color3B::WHITE);
+        nextRoundItem->setColor(Color3B::BLACK);
         nextRoundItem->setDisabledColor(Color3B::GRAY);
         nextRoundItem->setAnchorPoint(Vec2(0.5, 0.5));
         nextRoundItem->setPosition(origin + Vec2(visibleSize) - Vec2(140, 150));
@@ -80,7 +82,7 @@ bool HelloWorld::init()
         // 联网 Connect
         auto connectLabel = Label::createWithTTF("Connect", font_filename, 36);
         connectItem = MenuItemLabel::create(connectLabel, CC_CALLBACK_1(HelloWorld::menuConnect, this));
-        connectItem->setColor(Color3B::WHITE);
+        connectItem->setColor(Color3B::BLACK);
         connectItem->setDisabledColor(Color3B::GRAY);
         connectItem->setAnchorPoint(Vec2(0.5, 0.5));
         connectItem->setPosition(origin + Vec2(visibleSize) - Vec2(140, 200));
@@ -127,14 +129,28 @@ bool HelloWorld::init()
         }*/
     }
 
-    // touch event
+    // touch event 鼠标提示信息
     {
+        // status_label
+        status_label = Label::createWithTTF("filename", font_filename, 18);
+        status_label->setColor(Color3B::BLACK);
+        status_label->setAnchorPoint(Vec2(0.5, 0.5));
+        status_label->setPosition(Vec2(origin + Vec2(visibleSize) - Vec2(140, 50)));
+        this->addChild(status_label, 1);
+
         // position_label
         position_label = Label::createWithTTF("x=0 y=0", font_filename, 36);
-        position_label->setColor(Color3B::WHITE);
+        position_label->setColor(Color3B::BLACK);
         position_label->setAnchorPoint(Vec2(0.5, 0.5));
         position_label->setPosition(Vec2(origin + Vec2(visibleSize) - Vec2(140, 300)));
         this->addChild(position_label, 1);
+
+        // player_label
+        player_name_label = Label::createWithTTF("READY", font_filename, 36);
+        player_name_label->setColor(Color3B::BLACK);
+        player_name_label->setAnchorPoint(Vec2(0.5, 0.5));
+        player_name_label->setPosition(Vec2(origin + Vec2(visibleSize) - Vec2(140, 330)));
+        this->addChild(player_name_label, 1);
 
         auto dispatcher = Director::getInstance()->getEventDispatcher();
         auto myListener = EventListenerTouchOneByOne::create();
@@ -155,7 +171,7 @@ bool HelloWorld::init()
         // label for tileDipMap
         for (int id = 0; id < 8; ++id) {
             Label* label = Label::createWithTTF("0/0", font_filename, 18);
-            label->setColor(Color3B::WHITE);
+            label->setColor(Color3B::BLACK);
             label->setAnchorPoint(Vec2(0.5, 0)); // 下边中点
             label->setPosition(Vec2(480, 20 + (7 - id) * 16));
             score_list.push_back(label);
@@ -164,7 +180,7 @@ bool HelloWorld::init()
         {
             int id = -1;
             Label* label = Label::createWithTTF("SAV/INC", font_filename, 18);
-            label->setColor(Color3B::WHITE);
+            label->setColor(Color3B::BLACK);
             label->setAnchorPoint(Vec2(0.5, 0)); // 下边中点
             label->setPosition(Vec2(480, 20 + (7 - id) * 16));
             addChild(label, 110);
@@ -189,14 +205,14 @@ bool HelloWorld::init()
 }
 
 
-
-
+// Close动作
 void HelloWorld::menuCloseCallback(Ref* sender)
 {
     // stop it 
     Director::getInstance()->end();
 }
 
+// Load动作
 void HelloWorld::menuLoadFile(Ref * sender)
 {
     // load file
@@ -229,14 +245,30 @@ void HelloWorld::menuLoadFile(Ref * sender)
         vector<int> bidPrice; vector<TPosition> bidPos;
         log_reader->getStart(bidPrice, bidPos);
         game->Start(bidPrice, bidPos);
-        RefreshMap();
 
         // enable
         nextRoundItem->setEnabled(true);
+        ui_status = UiStatusLoad;
+
+        // status label
+        string name = buffer;
+        
+        if (name.rfind('/') != string::npos) {
+            name = name.substr(name.rfind('/') + 1);
+        }
+        if (name.rfind('\\') != string::npos) {
+            name = name.substr(name.rfind('\\') + 1);
+        }
+        for (char& c : name) if (!isdigit(c) && !isalpha(c) && c!='.' && c!='_') c = '*';
+        status_label->setString(name);
+        
+        RefreshMap();
+        
     }
 
 }
 
+// NextRound动作
 void HelloWorld::menuNextRound(Ref * sender)
 {
     if (game == nullptr) return;
@@ -271,6 +303,7 @@ void HelloWorld::menuNextRound(Ref * sender)
     
 }
 
+// Connect动作
 void HelloWorld::menuConnect(Ref * sender)
 {
     int player_size = 0;
@@ -321,6 +354,10 @@ void HelloWorld::menuConnect(Ref * sender)
     nextRoundItem->setEnabled(false);
     connectItem->setEnabled(false);
 
+    status_label->setString("CONNECTING");
+
+    ui_status = UiStatusConnect;
+
     // new thread
     {
         boost::function0<void> f = boost::bind(&HelloWorld::web_logic, this);
@@ -328,8 +365,10 @@ void HelloWorld::menuConnect(Ref * sender)
         thread->timed_join(boost::posix_time::milliseconds(200));
     }
 
+
 }
 
+// Test动作
 void HelloWorld::menuTest(Ref * sender)
 {
 
@@ -347,6 +386,7 @@ void HelloWorld::menuTest(Ref * sender)
     RefreshMap();
 }
 
+// 点击窗口任意位置
 bool HelloWorld::touchPosition(cocos2d::Touch* touch, cocos2d::Event* event)
 {
     Vec2 p = touch->getLocation();
@@ -355,55 +395,131 @@ bool HelloWorld::touchPosition(cocos2d::Touch* touch, cocos2d::Event* event)
     
     if (x < 0 || x >= _tileMap->getMapSize().width
         || y < 0 || y >= _tileMap->getMapSize().height) return false;
+
     position_label->setString("x=" + to_string(x) + " y=" + to_string(y));
+    
+
+    if (map.size() > x) 
+        if (map[x].size() > y) {
+            TId owner = map[x][y].owner;
+            string s;
+            if (owner == UNKNOWN_PLAYER_ID)
+                s = "UNKOWN";
+            else if (owner == NEUTRAL_PLAYER_ID)
+                s = "NEUTRAL";
+            else {
+                switch (ui_status)
+                {
+                case HelloWorld::UiStatusReady:
+                    s = "Ready";
+                    break;
+                case HelloWorld::UiStatusLoad:
+                    if (log_reader != NULL) s = log_reader->getUserName(owner);
+                    else s = "log_reader???";
+                    break;
+                case HelloWorld::UiStatusConnect:
+                    s = "...";
+                    break;
+                default:
+                    s = "???";
+                    break;
+                }
+            }
+            player_name_label->setString(s);
+        }
+                
+           
+
     return true;
 }
 
+// 刷新地图
 void HelloWorld::RefreshMap()
 {
 
     if (game == nullptr) return;
+
     TMap cols = game->getCols();
     TMap rows = game->getRows();
     TId player_size = game->getPlayerSize();
-    vector<vector<MapPointInfo> > map = game->getGlobalMap();
+    /*vector<vector<MapPointInfo> >*/ map = game->getGlobalMap();
     vector<vector<TDiplomaticStatus> > dip = game->getDiplomacy();
     vector<TMoney> sav = game->getPlayerSaving();
     vector<TMoney> inc = game->getPlayerIncome();
     vector<int> rank = game->getPlayerRanking();
 
+    const int GID_COLOR_ICON = 1;       // 色块
+    const int GID_MILITARY_ICON = 11;   // 小房子
+    const int GID_SHADOW = 21;          // 阴影
+    const int GID_BORDER = 23;          // 边界
+    const int GID_LINK_BORDER = 151;    // 边界连接线
+
+    const int DIP_ICON = 1;         // 外交图：外交
+    const int TARGET_LEFT = 11;     // 外交图：左侧箭头
+    const int TARGET_UP = 21;       // 外交图：上侧箭头
+
     CCLOG("refresh map");
 
-    // military icon
-    if (loadItem->isEnabled())
+    static vector<vector<TId> > tmc_map(cols, vector<TId>(rows, UNKNOWN_PLAYER_ID));
+    static vector<vector<int> > mil_map(cols, vector<int>(rows, 0));
+
+    // 军事的小房子
+    if (ui_status == UiStatusLoad)
     {
+        // 读取 MilitaryCommand，显示小房子
+
         auto layer_icon = _tileMap->getLayer("icon");
-        vector<vector<TId> > tmc_map(cols,
-            vector<TId>(rows, UNKNOWN_PLAYER_ID));
+        
         vector<vector<TMilitaryCommand>> MilitaryCommandMap;
         vector<vector<TDiplomaticCommand>> DiplomaticCommandMap;
         vector<TPosition> NewCapitalList;
-        if (log_reader->get(game->getRound(),
-            MilitaryCommandMap,
-            DiplomaticCommandMap,
+        if (log_reader->get(game->getRound(), 
+            MilitaryCommandMap, 
+            DiplomaticCommandMap, 
             NewCapitalList)) {
 
+            // 然后清理
+            for (TMap x = 0; x < cols; ++x)
+                for (TMap y = 0; y < rows; ++y)
+                    tmc_map[x][y] = UNKNOWN_PLAYER_ID;
+
+            // 
             for (TId id = 0; id < player_size; ++id)
                 for (size_t i = 0; i < MilitaryCommandMap[id].size(); ++i) {
                     TMilitaryCommand& tmc = MilitaryCommandMap[id][i];
-                    if (tmc.bomb_size > 0 && tmc.place.x < cols && tmc.place.y < rows)
+                    if (tmc.bomb_size > 0 && tmc.place.x < cols && tmc.place.y < rows) {
                         tmc_map[tmc.place.x][tmc.place.y] = id;
+                        mil_map[tmc.place.x][tmc.place.y] = tmc.bomb_size;
+                    }
 
                 }
             for (TId id = 0; id < player_size; ++id)
                 if (NewCapitalList[id].x < cols && NewCapitalList[id].y) {
                     tmc_map[NewCapitalList[id].x][NewCapitalList[id].y] = id;
+                    mil_map[NewCapitalList[id].x][NewCapitalList[id].y] = 60;
                 }
 
             for (TMap x = 0; x < cols; ++x)
                 for (TMap y = 0; y < rows; ++y) {
                     if (game->isPlayer(tmc_map[x][y])) {
-                        layer_icon->setTileGID(11 + tmc_map[x][y], Vec2(x, y));
+                        layer_icon->setTileGID(GID_MILITARY_ICON + tmc_map[x][y], Vec2(x, y));
+
+                        // 军事小房子的动画
+
+                        if (mil_map[x][y] >= 40) {
+                            float scale_size = (float)mil_map[x][y] / 20.0;
+                            if (scale_size < 1.2) scale_size = 1.2;
+                            if (scale_size > 7) scale_size = 7;
+
+                            Sprite* sprite = Sprite::create("icon/" + std::to_string(tmc_map[x][y]) + ".png");
+                            ScaleTo* scale_to = ScaleTo::create(0.3, scale_size);
+                            FadeOut* fade_out = FadeOut::create(0.5);
+                            Sequence* sequence = Sequence::createWithTwoActions(scale_to, fade_out);
+                            sprite->setAnchorPoint(Vec2(0.5, 0.5));
+                            sprite->setPosition(Vec2(_tileMap->getPosition().x + 16 * x + 8, _tileMap->getPosition().y + 16 * (35 - y) - 8));
+                            addChild(sprite, 200);
+                            sprite->runAction(sequence);
+                        }
                     }
                     else layer_icon->setTileGID(0, Vec2(x, y));
                 }
@@ -416,6 +532,8 @@ void HelloWorld::RefreshMap()
         }
     }
     else {
+        // 否则清空这一层
+
         auto layer_icon = _tileMap->getLayer("icon");
         for (TMap x = 0; x < cols; ++x)
             for (TMap y = 0; y < rows; ++y)
@@ -423,30 +541,27 @@ void HelloWorld::RefreshMap()
 
     }
 
-
-    // map color & shadow
+    // 显示地图颜色，和断补阴影
     {
         auto layer_color = _tileMap->getLayer("color");
         auto layer_shadow = _tileMap->getLayer("shadow");
         for (int x = 0; x < cols; ++x)
             for (int y = 0; y < rows; ++y) {
                 MapPointInfo& mpi = map[x][y];
-                int gid_color = 0;
+                int gid_color = -1;
                 int gid_shadow = 0;
 
                 if (game->isPlayer(mpi.owner)) {
-                    gid_color = mpi.owner + 1;
-                    if (mpi.isSieged) gid_shadow = 21;
+                    gid_color = mpi.owner;
+                    if (mpi.isSieged) gid_shadow = GID_SHADOW;
                 }
 
-                layer_color->setTileGID(gid_color, Vec2(x, y));
+                layer_color->setTileGID(GID_COLOR_ICON + gid_color, Vec2(x, y));
                 layer_shadow->setTileGID(gid_shadow, Vec2(x, y));
             }
     }
 
-
-
-    // dip
+    // 显示外交小图
     {
        
         auto layer_dip = _tileDipMap->getLayer("dip");
@@ -454,7 +569,7 @@ void HelloWorld::RefreshMap()
         vector<int> order(player_size);
 
         for (int i = 0; i < player_size; ++i) {
-            layer_icon->setTileGID(11 + rank[i], Vec2(0, 1 + i));
+            layer_icon->setTileGID(TARGET_LEFT + rank[i], Vec2(0, 1 + i));
             order[rank[i]] = i;
         }
         /*for (TId id = 0; id < player_size; ++id) {
@@ -466,7 +581,7 @@ void HelloWorld::RefreshMap()
 
         for (TId i1=0; i1<player_size; ++i1)
             for (TId i2 = 0; i2 < player_size; ++i2) {
-                if (i1 != i2) layer_dip->setTileGID(1 + dip[i1][i2], Vec2(1 + i1, 1 + order[i2]));
+                if (i1 != i2) layer_dip->setTileGID(DIP_ICON + dip[i1][i2], Vec2(1 + i1, 1 + order[i2]));
                 else layer_dip->setTileGID(0, Vec2(1 + i1, 1 + order[i2]));
             }
         for (TId id=0; id<player_size; ++id)
@@ -479,6 +594,7 @@ void HelloWorld::RefreshMap()
                 
     }
 
+    // 在地图上显示边界和连线，展现国家外交关系
     {
         auto layer_border = _tileMap->getLayer("border");
         auto layer_border_bak = _tileMap->getLayer("border_bak");
@@ -508,7 +624,7 @@ void HelloWorld::RefreshMap()
                     else if (dip[map[lx][ly].owner][map[x][y].owner] == AtWar) map_border[x][y] += bd[i];
                 }
                 /*if (map_border[x][y] == 0)layer_border->setTileGID(0, Vec2(x, y));
-                else*/ layer_border->setTileGID(16 * map[x][y].owner + 23 + map_border[x][y], Vec2(x, y));
+                else*/ layer_border->setTileGID(16 * map[x][y].owner + GID_BORDER + map_border[x][y], Vec2(x, y));
             }
 
         for (int x = 0; x < cols; ++x)
@@ -525,11 +641,12 @@ void HelloWorld::RefreshMap()
                     else if (dip[map[lx][ly].owner][map[x][y].owner] == Allied) map_allied[x][y] += bd[i];
                 }
                 /*if (map_border[x][y] == 0)layer_border->setTileGID(0, Vec2(x, y));
-                else*/ layer_allied->setTileGID(16 * map[x][y].owner + 151 + map_allied[x][y], Vec2(x, y));
+                else*/ layer_allied->setTileGID(16 * map[x][y].owner + GID_LINK_BORDER + map_allied[x][y], Vec2(x, y));
             }
     }
 }
 
+// 联网逻辑
 void HelloWorld::web_logic()
 {
     int player_size = 0;

@@ -21,6 +21,13 @@ public:
 
 private:
 
+    enum UiStatus {
+        UiStatusReady,
+        UiStatusLoad,
+        UiStatusConnect
+    };
+    UiStatus ui_status;
+
     // menu ÏìÓ¦º¯Êý
     void menuCloseCallback(cocos2d::Ref* sender);
     void menuLoadFile(cocos2d::Ref* sender);
@@ -37,12 +44,13 @@ private:
     cocos2d::CCTMXTiledMap *_tileMap;
     cocos2d::CCTMXTiledMap *_tileDipMap;
     cocos2d::MenuItemLabel *loadItem, *nextRoundItem, *connectItem, *testItem;
-    cocos2d::Label *position_label;
+    cocos2d::Label *position_label, *player_name_label, *status_label;
     std::vector<cocos2d::Label*>  score_list;
 
     // ÓÎÏ·
     XGHJ::Map *game_map;
     vector<vector<float> > military_kernel;
+    vector<vector<MapPointInfo> > map;
     XGHJ::Game *game;
     XGHJ::LogReader *log_reader;
 

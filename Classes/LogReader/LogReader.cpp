@@ -14,6 +14,8 @@ namespace XGHJ {
     {
     }
 
+    static const int FLAG_ID_1 = -8930218;
+
     int LogReader::load(std::string filename)
     {
         ifstream ifs;
@@ -26,8 +28,23 @@ namespace XGHJ {
             int t;
 
             // _player_size
-            ifs >> t; _player_size = t;
-            if (ifs.eof()) return -1;
+            ifs >> t; 
+            
+            if (t>0 && t <= 100) {
+                _player_size = t;
+                if (ifs.eof()) return -1;
+            }
+            else if (t == FLAG_ID_1) {
+                ifs >> t;
+                _player_size = t;
+                if (ifs.eof()) return -1;
+                for (int i = 0; i < _player_size; ++i) {
+                    string s;
+                    ifs >> s;
+                    _user_name_list.push_back(s);
+                }
+            }
+            else return -1;
 
             // Bid phase
             // _bid_price
