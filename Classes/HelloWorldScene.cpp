@@ -136,21 +136,21 @@ bool HelloWorld::init()
         status_label->setColor(Color3B::BLACK);
         status_label->setAnchorPoint(Vec2(0.5, 0.5));
         status_label->setPosition(Vec2(origin + Vec2(visibleSize) - Vec2(140, 50)));
-        this->addChild(status_label, 1);
+        this->addChild(status_label, 200);
 
         // position_label
         position_label = Label::createWithTTF("x=0 y=0", font_filename, 36);
         position_label->setColor(Color3B::BLACK);
         position_label->setAnchorPoint(Vec2(0.5, 0.5));
         position_label->setPosition(Vec2(origin + Vec2(visibleSize) - Vec2(140, 300)));
-        this->addChild(position_label, 1);
+        this->addChild(position_label, 200);
 
         // player_label
         player_name_label = Label::createWithTTF("READY", font_filename, 36);
         player_name_label->setColor(Color3B::BLACK);
         player_name_label->setAnchorPoint(Vec2(0.5, 0.5));
         player_name_label->setPosition(Vec2(origin + Vec2(visibleSize) - Vec2(140, 330)));
-        this->addChild(player_name_label, 1);
+        this->addChild(player_name_label, 200);
 
         auto dispatcher = Director::getInstance()->getEventDispatcher();
         auto myListener = EventListenerTouchOneByOne::create();
@@ -200,6 +200,8 @@ bool HelloWorld::init()
         loadMilitaryKernel(military_kernel,
             FileUtils::getInstance()->fullPathForFilename((kernel_filename)));
     }
+
+    portrait_enabled = false;
 
     return true;
 }
@@ -259,9 +261,10 @@ void HelloWorld::menuLoadFile(Ref * sender)
         if (name.rfind('\\') != string::npos) {
             name = name.substr(name.rfind('\\') + 1);
         }
-        for (char& c : name) if (!isdigit(c) && !isalpha(c) && c!='.' && c!='_') c = '*';
+        for (char& c : name) if (!isdigit((unsigned char)c) && !isalpha((unsigned char)c) && c!='.' && c!='_') c = '*';
         status_label->setString(name);
-        
+        nextRoundItem->setString("START");
+
         RefreshMap();
         
     }
@@ -271,7 +274,10 @@ void HelloWorld::menuLoadFile(Ref * sender)
 // NextRound动作
 void HelloWorld::menuNextRound(Ref * sender)
 {
-    if (game == nullptr) return;
+    if (game == nullptr) {
+        nextRoundItem->setString("NEXT");
+        return;
+    }
 
     TRound round = game->getRound();
     int player_size = game->getPlayerSize();
@@ -279,6 +285,8 @@ void HelloWorld::menuNextRound(Ref * sender)
     vector<vector<TMilitaryCommand>> MilitaryCommandMap;
     vector<vector<TDiplomaticCommand>> DiplomaticCommandMap;
     vector<TPosition> NewCapitalList;
+
+    nextRoundItem->setString("NEXT(" + to_string(round) + ")");
 
     if (loadItem->isEnabled()) {
         if (log_reader->get(round,
@@ -298,8 +306,28 @@ void HelloWorld::menuNextRound(Ref * sender)
     RefreshMap();
 
     if (log_reader!=nullptr)
-        if (game->getRound() >= log_reader->getRound())
+        if (game->getRound() >= log_reader->getRound()) {
+
+            if (portrait_enabled) {
+                vector<int> rank = game->getPlayerRanking();
+                vector<TMoney> inc = game->getPlayerIncome();
+                for (int i = 0; i < rank.size(); ++i) {
+                    TId a = rank[i];
+                    if (inc[a] > 0) {
+                        Sprite* s0 = Sprite::create("portrait/" + to_string(a) + ".png");
+                        Sprite* ss = Sprite::create("portrait/allied.png");
+                        s0->setAnchorPoint(Vec2(0.5, 0.5)); s0->setPosition(Vec2(660 - 250, 60 + (rank.size() - i - 1) * 48));
+                        ss->setAnchorPoint(Vec2(0.5, 0.5)); ss->setPosition(Vec2(660 - 220, 60 + (rank.size() - i - 1) * 48));
+                        addChild(s0, 200); 
+                        addChild(ss, 201);
+                        s0->runAction(Sequence::create(DelayTime::create(4.0), FadeOut::create(2.0), Hide::create(), nullptr));
+                        ss->runAction(Sequence::create(DelayTime::create(4.0), FadeOut::create(2.0), Hide::create(), nullptr));
+                    }
+                }
+            }
+
             nextRoundItem->setEnabled(false);
+        }
     
 }
 
@@ -308,63 +336,17 @@ void HelloWorld::menuConnect(Ref * sender)
 {
     int player_size = 0;
 
-    if (thread != nullptr) {
-        return;
-    }
-
     if (io_service == nullptr) io_service = new boost::asio::io_service;
 
-
-
-    // init
-    try
-    {
-        std::ifstream web_ifs(FileUtils::getInstance()->fullPathForFilename(web_filename));
-        std::string server_ip;
-        int server_port;
-        if (!web_ifs.is_open()) return;
-        web_ifs >> server_ip;
-        web_ifs >> server_port;
-
-        xs = new XGHJ_Client::XghjProtocolSocket(*io_service, server_ip, server_port);
-        if (!xs->isValid()) return;
-        io_service->run();
-
-    }
-    catch (exception e) {
-        CCLOG(e.what());
-        return;
-    }
-
-    // first hello
-    try
-    {
-        using namespace XGHJ_Client;
-        XghjObject obj(XghjObject::Viewer, XghjObject::NewGame, "UI Log Viewer");
-        xs->send(obj);
-        obj = xs->getObj(); CCLOG(obj.content.c_str());
-        if (obj.action != XghjObject::OK) return;
-    }
-    catch (exception e) {
-        CCLOG(e.what());
-        return;
-    }
-
-    loadItem->setEnabled(false);
-    nextRoundItem->setEnabled(false);
+    status_label->setString("CONNECTING... PLEASE WAIT");
     connectItem->setEnabled(false);
-
-    status_label->setString("CONNECTING");
-
-    ui_status = UiStatusConnect;
 
     // new thread
     {
-        boost::function0<void> f = boost::bind(&HelloWorld::web_logic, this);
-        thread = new boost::thread(f);
-        thread->timed_join(boost::posix_time::milliseconds(200));
+        boost::function0<void> f = boost::bind(&HelloWorld::web_hello, this);
+        thread_hello = new boost::thread(f);
+        thread_hello->timed_join(boost::posix_time::milliseconds(1));
     }
-
 
 }
 
@@ -390,6 +372,10 @@ void HelloWorld::menuTest(Ref * sender)
 bool HelloWorld::touchPosition(cocos2d::Touch* touch, cocos2d::Event* event)
 {
     Vec2 p = touch->getLocation();
+
+    if (p.x > 434 && p.y < 200) portrait_enabled = !portrait_enabled;
+    CCLOG((to_string(p.x) + " " + to_string(p.y)).c_str());
+
     int x = (p.x - _tileMap->getPosition().x) / 16;
     int y = (_tileMap->getContentSize().height - (p.y - _tileMap->getPosition().y)) / 16;
     
@@ -414,7 +400,15 @@ bool HelloWorld::touchPosition(cocos2d::Touch* touch, cocos2d::Event* event)
                     s = "Ready";
                     break;
                 case HelloWorld::UiStatusLoad:
-                    if (log_reader != NULL) s = log_reader->getUserName(owner);
+                    if (log_reader != NULL) {
+                        s = log_reader->getUserName(owner);
+                        if (portrait_enabled) {
+                            Sprite* s0 = Sprite::create("portrait/" + to_string(owner) + ".png");
+                            s0->setAnchorPoint(Vec2(0.5, 0.5)); s0->setPosition(Vec2(460, 285));
+                            addChild(s0, 300);
+                            s0->runAction(Sequence::create(DelayTime::create(3.0), FadeOut::create(1.0), Hide::create(), nullptr));
+                        }
+                    }
                     else s = "log_reader???";
                     break;
                 case HelloWorld::UiStatusConnect:
@@ -428,7 +422,7 @@ bool HelloWorld::touchPosition(cocos2d::Touch* touch, cocos2d::Event* event)
             player_name_label->setString(s);
         }
                 
-           
+
 
     return true;
 }
@@ -442,12 +436,7 @@ void HelloWorld::RefreshMap()
     TMap cols = game->getCols();
     TMap rows = game->getRows();
     TId player_size = game->getPlayerSize();
-    /*vector<vector<MapPointInfo> >*/ map = game->getGlobalMap();
-    vector<vector<TDiplomaticStatus> > dip = game->getDiplomacy();
-    vector<TMoney> sav = game->getPlayerSaving();
-    vector<TMoney> inc = game->getPlayerIncome();
-    vector<int> rank = game->getPlayerRanking();
-
+    
     const int GID_COLOR_ICON = 1;       // 色块
     const int GID_MILITARY_ICON = 11;   // 小房子
     const int GID_SHADOW = 21;          // 阴影
@@ -460,8 +449,15 @@ void HelloWorld::RefreshMap()
 
     CCLOG("refresh map");
 
+    // 地图信息
+    /*vector<vector<MapPointInfo> >*/ map = game->getGlobalMap();
     static vector<vector<TId> > tmc_map(cols, vector<TId>(rows, UNKNOWN_PLAYER_ID));
     static vector<vector<int> > mil_map(cols, vector<int>(rows, 0));
+    static vector<vector<TDiplomaticStatus> > dip;
+    static vector<TMoney> inc;
+    vector<vector<TMilitaryCommand>> MilitaryCommandMap;
+    vector<vector<TDiplomaticCommand>> DiplomaticCommandMap;
+    vector<TPosition> NewCapitalList;
 
     // 军事的小房子
     if (ui_status == UiStatusLoad)
@@ -470,9 +466,6 @@ void HelloWorld::RefreshMap()
 
         auto layer_icon = _tileMap->getLayer("icon");
         
-        vector<vector<TMilitaryCommand>> MilitaryCommandMap;
-        vector<vector<TDiplomaticCommand>> DiplomaticCommandMap;
-        vector<TPosition> NewCapitalList;
         if (log_reader->get(game->getRound(), 
             MilitaryCommandMap, 
             DiplomaticCommandMap, 
@@ -494,7 +487,7 @@ void HelloWorld::RefreshMap()
 
                 }
             for (TId id = 0; id < player_size; ++id)
-                if (NewCapitalList[id].x < cols && NewCapitalList[id].y) {
+                if (NewCapitalList[id].x < cols && NewCapitalList[id].y < rows) {
                     tmc_map[NewCapitalList[id].x][NewCapitalList[id].y] = id;
                     mil_map[NewCapitalList[id].x][NewCapitalList[id].y] = 60;
                 }
@@ -514,7 +507,7 @@ void HelloWorld::RefreshMap()
                             Sprite* sprite = Sprite::create("icon/" + std::to_string(tmc_map[x][y]) + ".png");
                             ScaleTo* scale_to = ScaleTo::create(0.3, scale_size);
                             FadeOut* fade_out = FadeOut::create(0.5);
-                            Sequence* sequence = Sequence::createWithTwoActions(scale_to, fade_out);
+                            Sequence* sequence = Sequence::create(scale_to, fade_out, Hide::create(), nullptr);
                             sprite->setAnchorPoint(Vec2(0.5, 0.5));
                             sprite->setPosition(Vec2(_tileMap->getPosition().x + 16 * x + 8, _tileMap->getPosition().y + 16 * (35 - y) - 8));
                             addChild(sprite, 200);
@@ -563,21 +556,115 @@ void HelloWorld::RefreshMap()
 
     // 显示外交小图
     {
-       
+        // 外交和经济情况
+        vector<TMoney> sav = game->getPlayerSaving();
+        vector<int> rank = game->getPlayerRanking();
+        vector<bool> backstab_enabled = game->getBackstabEnabled();
+
         auto layer_dip = _tileDipMap->getLayer("dip");
         auto layer_icon = _tileDipMap->getLayer("icon");
         vector<int> order(player_size);
+        
+        vector<vector<TDiplomaticStatus> > new_dip = game->getDiplomacy();
+        vector<TMoney> new_inc = game->getPlayerIncome();
+
+        if (portrait_enabled && dip.size() == player_size && DiplomaticCommandMap.size() == player_size) {
+
+            int dip_display_count = 0;
+            int round = log_reader->getRound();
+            int failed_players = 0;
+            int backstab_players = 0;
+
+            for (TId id = 0; id < player_size; ++id) {
+                if (!game->isAlive(id)) ++failed_players;
+            }
+
+            for (TId a = 0; a < player_size; ++a) {
+                vector<TId> new_war;
+                vector<TId> new_ally;
+
+                for (TId b = 0; b < player_size; ++b) {
+                    if (new_dip[a][b] == AtWar && dip[a][b] != AtWar && (DiplomaticCommandMap[a][b] == JustifyWar || DiplomaticCommandMap[a][b] == Backstab))
+                        new_war.push_back(b);
+                    if (new_dip[a][b] == Allied && dip[a][b] != Allied)
+                        new_ally.push_back(b);
+                }
+
+                // 阵亡
+                if (new_inc[a] == 0 && inc[a] != 0) {
+                    --failed_players;
+                    Sprite* s0 = Sprite::create("portrait/" + to_string(a) + ".png");
+                    Sprite* ss = Sprite::create("portrait/atwar.png");
+                    s0->setAnchorPoint(Vec2(0.5, 0.5)); s0->setPosition(Vec2(660 - 250, 60 + failed_players * 48));
+                    ss->setAnchorPoint(Vec2(0.5, 0.5)); ss->setPosition(Vec2(660 - 220, 60 + failed_players * 48));
+                    addChild(s0, 200 + round * 2);
+                    addChild(ss, 201 + round * 2);
+                    s0->runAction(Sequence::create(DelayTime::create(3.0), FadeOut::create(1.0), Hide::create(), nullptr));
+                    ss->runAction(Sequence::create(DelayTime::create(3.0), FadeOut::create(1.0), Hide::create(), nullptr));
+                }
+
+                // 背刺
+                if (backstab_enabled[a]) {
+                    ++backstab_players;
+                    Sprite* s0 = Sprite::create("portrait/" + to_string(a) + ".png");
+                    Sprite* ss = Sprite::create("portrait/backstab.png");
+                    s0->setAnchorPoint(Vec2(0.5, 0.5)); s0->setPosition(Vec2(660 - 250, 396 + backstab_players * 48));
+                    ss->setAnchorPoint(Vec2(0.5, 0.5)); ss->setPosition(Vec2(660 - 220, 396 + backstab_players * 48));
+                    addChild(s0, 200 + round * 2);
+                    addChild(ss, 201 + round * 2);
+                    s0->runAction(Sequence::create(DelayTime::create(5.0), FadeOut::create(2.0), Hide::create(), nullptr));
+                    ss->runAction(Sequence::create(DelayTime::create(5.0), FadeOut::create(2.0), Hide::create(), nullptr));
+                }
+
+                // 宣战
+                if (new_war.size() != 0) {
+                    Sprite* s0 = Sprite::create("portrait/" + to_string(a) + ".png");
+                    Sprite* ss = Sprite::create("portrait/atwar.png");
+                    s0->setAnchorPoint(Vec2(0.5, 0.5)); s0->setPosition(Vec2(660, 200 + dip_display_count * 48));
+                    ss->setAnchorPoint(Vec2(0.5, 0.5)); ss->setPosition(Vec2(660 - 30, 200 + dip_display_count * 48));
+                    addChild(s0, round * 2);
+                    addChild(ss, 1 + round * 2);
+                    s0->runAction(Sequence::create(DelayTime::create(3.0), MoveTo::create(0.2, Vec2(730, 200 + dip_display_count * 48)), Hide::create(), nullptr));
+                    ss->runAction(Sequence::create(DelayTime::create(3.0), MoveTo::create(0.2, Vec2(730, 200 + dip_display_count * 48)), Hide::create(), nullptr));
+                    for (int i = 0; i < new_war.size(); ++i) {
+                        Sprite* s = Sprite::create("portrait/" + to_string(new_war[i]) + ".png");
+                        s->setAnchorPoint(Vec2(0.5, 0.5)); s->setPosition(Vec2(660 - 70 - 48 * i, 200 + dip_display_count * 48));
+                        addChild(s, round * 2);
+                        s->runAction(Sequence::create(DelayTime::create(3.0), MoveTo::create(0.2, Vec2(730, 200 + dip_display_count * 48)), Hide::create(), nullptr));
+                        dip[new_war[i]][a] = dip[a][new_war[i]] = AtWar; // clear the record
+                    }
+                    ++dip_display_count;
+                }
+
+                // 和平
+                if (new_ally.size() != 0) {
+                    Sprite* s0 = Sprite::create("portrait/" + to_string(a) + ".png");
+                    Sprite* ss = Sprite::create("portrait/allied.png");
+                    s0->setAnchorPoint(Vec2(0.5, 0.5)); s0->setPosition(Vec2(660, 200 + dip_display_count * 48));
+                    ss->setAnchorPoint(Vec2(0.5, 0.5)); ss->setPosition(Vec2(660 - 30, 200 + dip_display_count * 48));
+                    addChild(s0, round * 2);
+                    addChild(ss, 1 + round * 2);
+                    s0->runAction(Sequence::create(DelayTime::create(3.0), MoveTo::create(0.2, Vec2(730, 200 + dip_display_count * 48)), Hide::create(), nullptr));
+                    ss->runAction(Sequence::create(DelayTime::create(3.0), MoveTo::create(0.2, Vec2(730, 200 + dip_display_count * 48)), Hide::create(), nullptr));
+                    for (int i = 0; i < new_ally.size(); ++i) {
+                        Sprite* s = Sprite::create("portrait/" + to_string(new_ally[i]) + ".png");
+                        s->setAnchorPoint(Vec2(0.5, 0.5)); s->setPosition(Vec2(660 - 70 - 48 * i, 200 + dip_display_count * 48));
+                        addChild(s, round * 2);
+                        s->runAction(Sequence::create(DelayTime::create(3.0), MoveTo::create(0.2, Vec2(730, 200 + dip_display_count * 48)), Hide::create(), nullptr));
+                    }
+                    ++dip_display_count;
+                }
+            }
+
+        }
+
+        dip = new_dip;
+        inc = new_inc;
 
         for (int i = 0; i < player_size; ++i) {
             layer_icon->setTileGID(TARGET_LEFT + rank[i], Vec2(0, 1 + i));
             order[rank[i]] = i;
         }
-        /*for (TId id = 0; id < player_size; ++id) {
-            if (game->isAlive(id))
-                layer_icon->setTileGID(11 + id, Vec2(1 + id, 0));
-            else
-                layer_icon->setTileGID(0, Vec2(1 + id, 0));
-        }*/
 
         for (TId i1=0; i1<player_size; ++i1)
             for (TId i2 = 0; i2 < player_size; ++i2) {
@@ -646,7 +733,71 @@ void HelloWorld::RefreshMap()
     }
 }
 
-// 联网逻辑
+// 握手
+void HelloWorld::web_hello()
+{
+    // init
+    try
+    {
+        std::ifstream web_ifs(FileUtils::getInstance()->fullPathForFilename(web_filename));
+        std::string server_ip;
+        int server_port;
+        if (!web_ifs.is_open()) {
+            fail_to_connect();
+            return;
+        }
+        web_ifs >> server_ip;
+        web_ifs >> server_port;
+
+        xs = new XGHJ_Client::XghjProtocolSocket(*io_service, server_ip, server_port);
+        if (!xs->isValid()) {
+            fail_to_connect();
+            return;
+        }
+        io_service->run();
+
+    }
+    catch (exception e) {
+        CCLOG(e.what());
+        fail_to_connect();
+        return;
+    }
+
+    // first hello
+    try
+    {
+        using namespace XGHJ_Client;
+        XghjObject obj(XghjObject::Viewer, XghjObject::NewGame, "UI Log Viewer");
+        xs->send(obj);
+        obj = xs->getObj(); CCLOG(obj.content.c_str());
+        if (obj.action != XghjObject::OK) {
+            fail_to_connect();
+            return;
+        }
+    }
+    catch (exception e) {
+        CCLOG(e.what());
+        fail_to_connect();
+        return;
+    }
+
+    loadItem->setEnabled(false);
+    nextRoundItem->setEnabled(false);
+    connectItem->setEnabled(false);
+
+    status_label->setString("CONNECTED");
+
+    ui_status = UiStatusConnect;
+
+    // new thread
+    {
+        boost::function0<void> f = boost::bind(&HelloWorld::web_logic, this);
+        thread = new boost::thread(f);
+        thread->timed_join(boost::posix_time::milliseconds(1));
+    }
+}
+
+// 联网
 void HelloWorld::web_logic()
 {
     int player_size = 0;
@@ -724,4 +875,10 @@ void HelloWorld::web_logic()
 
         RefreshMap();
     }
+}
+
+void HelloWorld::fail_to_connect()
+{
+    connectItem->setEnabled(true);
+    status_label->setString("FAILED TO CONNEDT");
 }

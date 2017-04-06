@@ -4,6 +4,7 @@
  *
  */
 
+#include <ctime>
 #include"player.h"
 
 namespace XGHJ {
@@ -15,6 +16,14 @@ Player::Player()
 Player::Player(string file_name, int id)
     : id(id), file_name(file_name)
 {
+    name = file_name;
+    if (name.rfind('/') != string::npos) {
+        name = name.substr(name.rfind('/')+1);
+    }
+    if (name.rfind('\\') != string::npos) {
+        name = name.substr(name.rfind('\\')+1);
+    }
+
     player_ai = NULL;
     birthplacePrice = NULL;
     birthplace = NULL;
@@ -62,82 +71,83 @@ bool Player::load()
 
 bool Player::run(Info &info)
 {
-#ifdef _MSC_VER
-    __try
-#endif
-#ifdef __GNUC__
-    try
-#endif
-    {
+    int time_a = GetTickCount();
+    int time_b;
+
+#if (!defined _MSC_VER) || (defined _DEBUG)
+    try {
         player_ai(info);
     }
-#ifdef _MSC_VER
-    __except(EXCEPTION_EXECUTE_HANDLER)
-#endif
-#ifdef __GNUC__
-    catch(...)
-#endif
-    {
+    catch(exception e) {
         cout << "[ERROR] Player " <<  (int)id << " raised an exception in run()." <<  endl;
-        //cout << e.what() << endl;
-        Valid = false;
-		return false;
+        cout << e.what() << endl; 
+        kill(); return false;
     }
+#else 
+    __try {
+        player_ai(info);
+    }
+    __except(EXCEPTION_EXECUTE_HANDLER) {
+        cout << "[ERROR] Player " <<  (int)id << " raised an exception in run()." <<  endl;
+        kill(); return false;
+    }
+#endif
+
+    time_b = GetTickCount();
+    if (time_b - time_a > 2000) kill();
+
     return true;
+
 }
 
 bool Player::run(TMoney &price, BaseMap* map)
 {
-#ifdef _MSC_VER
-    __try
-#endif
-#ifdef __GNUC__
-    try
-#endif
-    {
+#if (!defined _MSC_VER) || (defined _DEBUG)
+    try {
         price = birthplacePrice(map);
         if (price>INITIAL_PLAYER_MONEY) price = INITIAL_PLAYER_MONEY;
     }
-#ifdef _MSC_VER
-    __except(EXCEPTION_EXECUTE_HANDLER)
-#endif
-#ifdef __GNUC__
-    catch(...)
-#endif
-    {
+    catch(exception e) {
         cout << "[ERROR] Player " <<  (int)id << " raised an exception in birthplacePrice()." <<  endl;
-        //cout << e.what() << endl;
-        Valid = false;
-        return false;
+        cout << e.what() << endl;
+        kill(); return false;
     }
+#else 
+    __try {
+        price = birthplacePrice(map);
+        if (price>INITIAL_PLAYER_MONEY) price = INITIAL_PLAYER_MONEY;
+    }
+    __except(EXCEPTION_EXECUTE_HANDLER) {
+        cout << "[ERROR] Player " <<  (int)id << " raised an exception in birthplacePrice()." <<  endl;
+        kill(); return false;
+    }
+#endif
+
     return true;
 }
 
 bool Player::run(TPosition &pos, vector<TPosition> &posSelected, BaseMap* map)
 {
 
-#ifdef _MSC_VER
-    __try
-#endif
-#ifdef __GNUC__
-  try
-#endif
-    {
-        
+#if (!defined _MSC_VER) || (defined _DEBUG)
+    try {
         pos = birthplace(posSelected, map);
     }
-#ifdef _MSC_VER
-    __except(EXCEPTION_EXECUTE_HANDLER)
-#endif
-#ifdef __GNUC__
-  catch(...)
-#endif
-    {
+    catch(exception e) {
         cout << "[ERROR] Player " <<  (int)id << " raised an exception in birthplace()." <<  endl;
-        //cout << e.what() << endl;
-        Valid = false;
-        return false;
+        cout << e.what() << endl;
+        kill(); return false;
     }
+#else
+    __try {
+        pos = birthplace(posSelected, map);
+    }
+    __except(EXCEPTION_EXECUTE_HANDLER) {
+        cout << "[ERROR] Player " <<  (int)id << " raised an exception in birthplace()." <<  endl;
+        kill(); return false;
+    }
+#endif
+
     return true;
 }
 

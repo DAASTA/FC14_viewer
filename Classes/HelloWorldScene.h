@@ -55,11 +55,17 @@ private:
     XGHJ::LogReader *log_reader;
 
     // 网络
-    void web_logic();
+    void web_hello(); // 握手
+    void web_logic(); // 联网
+    void fail_to_connect();
 
-    boost::thread* thread;
+    boost::thread *thread_hello, *thread;
     boost::asio::io_service* io_service;
     XGHJ_Client::XghjProtocolSocket* xs;
+
+    // 条件判断
+    bool portrait_enabled;
+
 };
 
 #endif // __HELLOWORLD_SCENE_H__

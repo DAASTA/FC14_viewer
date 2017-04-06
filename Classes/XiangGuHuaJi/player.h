@@ -52,7 +52,8 @@ public:
     bool load();
 
     inline void kill() {Valid = false;}
-
+    
+    inline string getName() { return name;}
     inline bool isValid() { return Valid; }
 
 private:
@@ -60,6 +61,7 @@ private:
     TBirthplacePrice  birthplacePrice;
     TBirthplace       birthplace;
     string           file_name;
+    string           name;
     TId              id;
     bool             Valid;
     __FUCK_DLLHANDLE hDLL;

@@ -24,7 +24,7 @@ int getNumber(char** p);
 
 struct XghjObject {
 
-
+    // 发送者枚举型
     enum XghjSender {
         Server,
         Player,
@@ -32,6 +32,7 @@ struct XghjObject {
         Unknown
     };
 
+    // 信息动作枚举型
     enum XghjAction{
         OK, 
         GameOver,
@@ -44,7 +45,7 @@ struct XghjObject {
         BidPosition
     };
 
-    // constructor
+    // XghjObject构造器
     XghjObject() 
         : round(0)
         , sender_id(-1)
@@ -204,15 +205,18 @@ public:
     XghjProtocolSocket(boost::asio::io_service& io_service, const std::string& addr, int port);
     ~XghjProtocolSocket();
 
+    // 发送
     bool send(std::string s);
+    // 发送
     bool send(const XghjObject& obj);
+    // 阻塞获取1个
     XghjObject getObj();
 
     inline bool isValid() const { return _valid; }
     inline bool empty() const { return _obj_queue.empty(); }
 
 private:
-
+    // 阻塞接收
     bool recv();
 
     std::queue<XghjObject> _obj_queue;
