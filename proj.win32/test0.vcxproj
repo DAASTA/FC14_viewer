@@ -156,6 +156,7 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)" /D /E /I /F /Y
     <ClCompile Include="..\Classes\XiangGuHuaJi\map.cpp" />
     <ClCompile Include="..\Classes\XiangGuHuaJi\military_kernel.cpp" />
     <ClCompile Include="..\Classes\XiangGuHuaJi\player.cpp" />
+    <ClCompile Include="HelloWorldScene.web.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -15,7 +15,7 @@
  <tileset firstgid="151" name="allied" tilewidth="16" tileheight="16" tilecount="128" columns="16">
   <image source="P/allied.png" width="256" height="128"/>
  </tileset>
- <layer name="color" width="25" height="35" opacity="0.7">
+ <layer name="color" width="25" height="35" opacity="0.6">
   <data encoding="csv">
 10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
 10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,

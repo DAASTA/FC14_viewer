@@ -39,6 +39,7 @@ private:
 
     // 私有函数
     void RefreshMap();
+    void ShowDiplomacy();
 
     // ui 指针
     cocos2d::CCTMXTiledMap *_tileMap;
@@ -46,6 +47,12 @@ private:
     cocos2d::MenuItemLabel *loadItem, *nextRoundItem, *connectItem, *testItem;
     cocos2d::Label *position_label, *player_name_label, *status_label;
     std::vector<cocos2d::Label*>  score_list;
+    std::vector<cocos2d::Sprite*> portrait_list;
+
+    // 坐标解析
+    cocos2d::Vec2 MapToUi(TPosition p);
+    TPosition UiToMap(cocos2d::Vec2 v);
+    TPosition p;
 
     // 游戏
     XGHJ::Map *game_map;
@@ -63,8 +70,8 @@ private:
     boost::asio::io_service* io_service;
     XGHJ_Client::XghjProtocolSocket* xs;
 
-    // 条件判断
-    bool portrait_enabled;
+    // 自动刷新
+    void update(float dt);
 
 };
 

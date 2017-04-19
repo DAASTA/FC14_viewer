@@ -48,6 +48,9 @@
     <ClCompile Include="..\Classes\XiangGuHuaJi\military_kernel.cpp">
       <Filter>src\XiangGuHuaJi</Filter>
     </ClCompile>
+    <ClCompile Include="HelloWorldScene.web.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
